@@ -4,4 +4,4 @@ language: python
 python:
   - "3.5"
 script:
-  - validate-on-master.sh
+  - ./validate-on-master.sh
