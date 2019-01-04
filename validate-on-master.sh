@@ -5,6 +5,8 @@
 
 set -e  # die on failure
 
+git log -n 4
+
 if [ -z "$TRAVIS_REPO_SLUG" ]; then
   echo "Missing repo."
   exit 1
