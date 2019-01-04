@@ -12,8 +12,8 @@ def request(url):
     if header in response.headers:
       print('    > %s: %s' % (header, response.headers[header]))
 
-  if r.status != 200:
-    print('   > %s' % r.content)
+  if response.status != 200:
+    print('   > %s' % response.content)
 
   response.raise_for_status()
   return response
