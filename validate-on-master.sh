@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # THIS FILE IS OUT OF BOUNDS
+# and bugs in this file aren't in bounds either
 
 set -e  # die on failure
 
@@ -12,6 +13,13 @@ fi
 if [ -z "$TRAVIS_PULL_REQUEST" ]; then
   echo "Missing PR number."
   exit 1
+fi
+
+if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+  if [ "$(git rev-parse --abbrev-ref HEAD)" != "master" ]; then
+    echo "Branch builds on pull requests are ignored"
+    exit 0
+  fi
 fi
 
 if [ -d tmp-nomic-master ]; then
