@@ -5,6 +5,13 @@ import requests
 def request(url):
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
   response = requests.get(url, headers=request_headers)
+
+  for header in ['X-RateLimit-Limit',
+                 'X-RateLimit-Remaining',
+                 'X-RateLimit-Reset']:
+    if header in response.headers:
+      print('    > %s: %s' % (header, response.headers[header]))
+
   response.raise_for_status()
   return response
 
