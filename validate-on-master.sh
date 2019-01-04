@@ -5,10 +5,6 @@
 
 set -e  # die on failure
 
-git log -n 4
-echo
-echo commit: "$TRAVIS_PULL_REQUEST_SHA"
-
 if [ -z "$TRAVIS_REPO_SLUG" ]; then
   echo "Missing repo."
   exit 1

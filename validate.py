@@ -14,7 +14,7 @@ def request(url):
 
   if r.status != 200:
     print('   > %s' % r.content)
-      
+
   response.raise_for_status()
   return response
 
@@ -23,6 +23,9 @@ def get_repo():
 
 def get_pr():
   return os.environ['TRAVIS_PULL_REQUEST']
+
+def get_commit():
+  return os.environ['TRAVIS_PULL_REQUEST_SHA']
 
 def base_pr_url():
   return 'https://api.github.com/repos/%s/pulls/%s' % (
@@ -41,9 +44,14 @@ def get_reviews():
 
     for review in response.json():
       user = review['user']['login']
+      commit = review['commit_id']
+      if commit != get_commit():
+        continue  # Only accept PR reviews for the most recent commit.
+
       state = review['state']
       if state == 'COMMENTED':
-        continue
+        continue  # Ignore comments.
+
       reviews[user] = state
 
     if 'next' in response.links:
