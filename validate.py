@@ -49,11 +49,7 @@ def get_users():
         users.add(line.strip())
   return list(sorted(users))
 
-def start():
-  if get_pr() == 'false':
-    print('Not a PR: PASS')
-    return
-  
+def determine_if_mergeable():
   users = get_users()
   print('Users:')
   for user in users:
@@ -78,6 +74,19 @@ def start():
     raise Exception('Insufficient approval.')
 
   print('\nPASS')
+
+def determine_if_winner():
+  users = get_users()
+  for user in users:
+    if random.random() < 0.0001:
+      raise RuntimeException('%s wins!' % user)
+  print('The game continues.')
+
+def start():
+  if get_pr() == 'false':
+    determine_if_winner()
+  else:
+    determine_if_mergable()
 
 if __name__ == '__main__':
   start()
