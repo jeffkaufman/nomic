@@ -32,8 +32,10 @@ git clone --depth=1 https://github.com/${TRAVIS_REPO_SLUG}.git tmp-nomic-master
 
 cd tmp-nomic-master
 
-python3 validate.py
+python3 validate.py  # first validate by the master rules
 
 cd ..
 
 rm -rf tmp-nomic-master
+
+python3 validate.py  # now validate by the new proposed rules
