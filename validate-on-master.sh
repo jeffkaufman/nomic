@@ -14,6 +14,13 @@ if [ -z "$TRAVIS_PULL_REQUEST" ]; then
   exit 1
 fi
 
+if [ "$TRAVIS_PULL_REQUEST" = "false"]; then
+  if [ $(git rev-parse --abbrev-ref HEAD) != "master" ]; then
+    echo "Branch builds on pull requests are ignored"
+    exit 0
+  fi
+fi
+
 if [ -d tmp-nomic-master ]; then
   rm -rf tmp-nomic-master
 fi
