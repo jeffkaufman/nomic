@@ -1,11 +1,12 @@
 import os
 import requests
+import subprocess
 
 def request(url):
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
   response = requests.get(url, headers=request_headers)
   response.raise_for_status()
-  return response.json()
+  return response
 
 def base_pr_url():
   return 'https://api.github.com/repos/%s/pulls/%s' % (
@@ -14,7 +15,7 @@ def base_pr_url():
 
 def get_author():
   response = request(base_pr_url())
-  return response['user']
+  return response.json()['user']['login']
 
 def get_reviews():
   url = '%s/reviews' % base_pr_url()
@@ -23,7 +24,7 @@ def get_reviews():
   while True:
     response = request(url)
 
-    for review in response:
+    for review in response.json():
       user = review['user']['login']
       state = review['state']
       if state == 'COMMENTED':
@@ -36,38 +37,52 @@ def get_reviews():
       return reviews
 
 def get_users():
+  cmd = ['git', 'show', 'master:players.txt']
+  print('Running command "%s"' % ' '.join(cmd))
+  process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+  (output, err) = process.communicate()
+  exit_code = process.wait()
+
+  print('Output: %s' % output)
+  if err:
+    print('Error: %s' % err)
+
+  if exit_code != 0:
+    raise Exception('Failed with exit code %s.' % exit_code)
+
   users = set()
-  with open('players.txt') as inf:
-    for line in inf:
+  for line in output.decode("utf-8").split('\n'):
+    line = line.strip()
+    if line:
       users.add(line.strip())
+
   return list(sorted(users))
 
 def start():
+  users = get_users()
+  print('Users:')
+  for user in users:
+    print('  %s' % user)
+
   author = get_author()
-  print ("Author: %s" % author)
+  print('\nAuthor: %s' % author)
 
   reviews = get_reviews()
   reviews[author] = 'APPROVED'
 
-  print ('Reviews:')
+  print('\nReviews:')
   for user, state in sorted(reviews.items()):
     print ('  %s: %s' % (user, state))
 
-  users = get_users()
   approval_count = 0
   for user in users:
     if reviews.get(user, None) == 'APPROVED':
       approval_count += 1
 
-  unanimous = (approval_count == len(users))
-  majority = (approval_count / len(users) > 0.5)
+  if approval_count < len(users):
+    raise Exception('Insufficient approval.')
 
-  if unanimous:
-    print ('Unanimous')
-  elif majority:
-    print ('Majority')
-  else:
-    print ('Failed')
+  print('\nPASS')
 
 if __name__ == '__main__':
   start()
