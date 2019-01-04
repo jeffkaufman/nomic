@@ -1,5 +1,7 @@
+# THIS FILE IS OUT OF BOUNDS
+
 language: python
 python:
   - "3.5"
 script:
-  - python validate.py
+  - validate-on-master.sh
