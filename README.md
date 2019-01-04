@@ -1,6 +1,7 @@
 # nomic
 
-To join the game, make a pull request to add your github username to players.txt
+To join the game, make a pull request to add your github username to
+players.txt
 
 Once you're playing, propose rule changes by making pull requests.
 
