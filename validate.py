@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 
 def request(url):
@@ -86,7 +87,7 @@ def start():
   if get_pr() == 'false':
     determine_if_winner()
   else:
-    determine_if_mergable()
+    determine_if_mergeable()
 
 if __name__ == '__main__':
   start()
