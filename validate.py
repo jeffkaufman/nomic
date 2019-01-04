@@ -83,6 +83,8 @@ def determine_if_winner():
   print('The game continues.')
 
 def start():
+  raise Exception('Not reached')
+
   if get_pr() == 'false':
     determine_if_winner()
   else:
