@@ -28,7 +28,21 @@ def get_commit():
   return os.environ['TRAVIS_PULL_REQUEST_SHA']
 
 def base_pr_url():
-  return 'https://api.github.com/repos/%s/pulls/%s' % (
+  # This is configured in nginx like:
+  #
+  #   location /nomic-github/repos/jeffkaufman/nomic {
+  #     proxy_pass https://api.github.com/repos/jeffkaufman/nomic;
+  #     proxy_set_header
+  #         Authorization
+  #         "Basic [base64 of 'username:token']";
+  #   }
+  #
+  # Where the token is a github personal access token:
+  #   https://github.com/settings/tokens
+  #
+  # There's an API limit of 60/hr per IP by default, and 5000/hr by
+  # user, and we need the higher limit.
+  return 'https://www.jefftk.com/nomic-github/repos/%s/pulls/%s' % (
     get_repo(), get_pr())
 
 def get_author():
