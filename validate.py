@@ -50,6 +50,10 @@ def get_users():
   return list(sorted(users))
 
 def start():
+  if get_pr() == 'false':
+    print('Not a PR: PASS')
+    return
+  
   users = get_users()
   print('Users:')
   for user in users:
