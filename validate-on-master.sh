@@ -14,6 +14,10 @@ if [ -z "$TRAVIS_PULL_REQUEST" ]; then
   exit 1
 fi
 
+if [ -d tmp-nomic-master ]; then
+  rm -rf tmp-nomic-master
+fi
+
 git clone --depth=1 https://github.com/${TRAVIS_REPO_SLUG}.git tmp-nomic-master
 
 cd tmp-nomic-master
