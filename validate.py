@@ -1,6 +1,8 @@
 import os
 import random
 import requests
+import subprocess
+import time
 
 def request(url):
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
@@ -87,6 +89,20 @@ def get_users():
         users.add(line.strip())
   return list(sorted(users))
 
+def last_commit_ts():
+  cmd = ['git', 'log', '-1', '--format=%ct']
+  completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
+  if completed_process.returncode != 0:
+    raise Exception(completed_process)
+
+  return int(completed_process.stdout)
+
+def seconds_since_last_commit():
+  return int(time.time() - last_commit_ts())
+
+def days_since_last_commit():
+  return int(seconds_since_last_commit() / 60 / 60 / 24) + 5
+
 def determine_if_mergeable():
   users = get_users()
   print('Users:')
@@ -109,8 +125,22 @@ def determine_if_mergeable():
     if reviews.get(user, None) == 'APPROVED':
       approval_count += 1
 
-  if approval_count < len(users):
-    raise Exception('Insufficient approval.')
+  required_approvals = len(users)
+
+  # Allow three days to go by with no commits, but if longer happens then start
+  # lowering the threshold for allowing a commit.
+  approvals_to_skip = days_since_last_commit() - 3
+  if approvals_to_skip > 0:
+    print("Skipping up to %s approvals, because it's been %s days"
+          " since the last commit." % (approvals_to_skip,
+                                      days_since_last_commit()))
+    required_approvals -= approvals_to_skip
+
+  print('Approvals: got %s needed %s' % (
+    approval_count, required_approvals))
+
+  if approval_count < required_approvals:
+    raise Exception('Insufficient approval')
 
   print('\nPASS')
 
