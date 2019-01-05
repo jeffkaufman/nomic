@@ -97,7 +97,8 @@ def determine_if_mergeable():
   print('\nAuthor: %s' % author)
 
   reviews = get_reviews()
-  reviews[author] = 'APPROVED'
+  if author in users:
+    reviews[author] = 'APPROVED'
 
   print('\nReviews:')
   for user, state in sorted(reviews.items()):
