@@ -50,6 +50,9 @@ def get_author():
   return response.json()['user']['login']
 
 def get_reviews():
+  target_commit = get_commit()
+  print('Considering reviews at commit %s' % target_commit)
+
   url = '%s/reviews' % base_pr_url()
   reviews = {}
 
@@ -59,10 +62,12 @@ def get_reviews():
     for review in response.json():
       user = review['user']['login']
       commit = review['commit_id']
-      if commit != get_commit():
+      state = review['state']
+
+      print('  %s: %s at %s' % (user, state, commit))
+      if commit != target_commit:
         continue  # Only accept PR reviews for the most recent commit.
 
-      state = review['state']
       if state == 'COMMENTED':
         continue  # Ignore comments.
 
