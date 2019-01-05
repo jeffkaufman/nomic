@@ -101,7 +101,7 @@ def seconds_since_last_commit():
   return int(time.time() - last_commit_ts())
 
 def days_since_last_commit():
-  return int(seconds_since_last_commit() / 60 / 60 / 24) + 5
+  return int(seconds_since_last_commit() / 60 / 60 / 24)
 
 def determine_if_mergeable():
   users = get_users()
