@@ -120,10 +120,18 @@ def determine_if_mergeable():
   for user, state in sorted(reviews.items()):
     print ('  %s: %s' % (user, state))
 
-  approval_count = 0
+  approvals = []
+  rejections = []
   for user in users:
-    if reviews.get(user, None) == 'APPROVED':
-      approval_count += 1
+    if user in reviews:
+      review = reviews[user]
+      if review == 'APPROVED':
+        approvals.append(user)
+      else:
+        rejections.append(user)
+
+  if rejections:
+    raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
   required_approvals = len(users)
 
@@ -136,10 +144,10 @@ def determine_if_mergeable():
                                       days_since_last_commit()))
     required_approvals -= approvals_to_skip
 
-  print('Approvals: got %s needed %s' % (
-    approval_count, required_approvals))
+  print('Approvals: got %s (%s) needed %s' % (
+      len(approvals), ' '.join(approvals), required_approvals))
 
-  if approval_count < required_approvals:
+  if len(approvals) < required_approvals:
     raise Exception('Insufficient approval')
 
   print('\nPASS')
