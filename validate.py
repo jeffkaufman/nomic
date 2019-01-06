@@ -79,13 +79,7 @@ def get_reviews():
       return reviews
 
 def get_users():
-  users = set()
-  with open('players.txt') as inf:
-    for line in inf:
-      line = line.strip()
-      if line:
-        users.add(line.strip())
-  return list(sorted(users))
+  return list(sorted(os.listdir('players/')))
 
 def determine_if_mergeable():
   users = get_users()
