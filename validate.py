@@ -156,11 +156,7 @@ def determine_if_mergeable():
   print('\nPASS')
 
 def determine_if_winner():
-  users = get_users()
-  for user in users:
-    if random.random() < 0.0001:
-      raise RuntimeException('%s wins!' % user)
-  print('The game continues.')
+  raise RuntimeException('TheJHyde wins!')
 
 def start():
   if get_pr() == 'false':
