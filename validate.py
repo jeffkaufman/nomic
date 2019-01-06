@@ -92,7 +92,8 @@ def get_users():
   return list(sorted(users))
 
 def last_commit_ts():
-  cmd = ['git', 'log', '-1', '--format=%ct']
+  # When was the last commit on master?
+  cmd = ['git', 'log', 'master', '-1', '--format=%ct']
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
   if completed_process.returncode != 0:
     raise Exception(completed_process)
