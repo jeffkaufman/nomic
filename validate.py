@@ -67,8 +67,10 @@ def get_reviews():
       state = review['state']
 
       print('  %s: %s at %s' % (user, state, commit))
-      if commit != target_commit:
-        continue  # Only accept PR reviews for the most recent commit.
+      if state == 'APPROVED' and commit != target_commit:
+        # Only accept approvals for the most recent commit, but have rejections
+        # last until overridden.
+        continue
 
       if state == 'COMMENTED':
         continue  # Ignore comments.
