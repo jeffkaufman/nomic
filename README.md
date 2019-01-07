@@ -1,10 +1,11 @@
 # nomic
 
 ## Joining
+=======
+Make a pull request to add your github username to players/.
 
-Make a pull request to add your github username to players.txt.
 If jeffkaufman doesn't add you to the list of repo collaborators, ping him to
-ask him to.
+ask him to.  This will allow you to press the merge button yourself.
 
 ## Playing
 

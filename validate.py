@@ -1,6 +1,8 @@
 import os
 import random
 import requests
+import subprocess
+import time
 
 def request(url):
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
@@ -65,8 +67,10 @@ def get_reviews():
       state = review['state']
 
       print('  %s: %s at %s' % (user, state, commit))
-      if commit != target_commit:
-        continue  # Only accept PR reviews for the most recent commit.
+      if state == 'APPROVED' and commit != target_commit:
+        # Only accept approvals for the most recent commit, but have rejections
+        # last until overridden.
+        continue
 
       if state == 'COMMENTED':
         continue  # Ignore comments.
@@ -79,13 +83,22 @@ def get_reviews():
       return reviews
 
 def get_users():
-  users = set()
-  with open('players.txt') as inf:
-    for line in inf:
-      line = line.strip()
-      if line:
-        users.add(line.strip())
-  return list(sorted(users))
+  return list(sorted(os.listdir('players/')))
+
+def last_commit_ts():
+  # When was the last commit on master?
+  cmd = ['git', 'log', 'master', '-1', '--format=%ct']
+  completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
+  if completed_process.returncode != 0:
+    raise Exception(completed_process)
+
+  return int(completed_process.stdout)
+
+def seconds_since_last_commit():
+  return int(time.time() - last_commit_ts())
+
+def days_since_last_commit():
+  return int(seconds_since_last_commit() / 60 / 60 / 24)
 
 def determine_if_mergeable():
   users = get_users()
@@ -104,13 +117,35 @@ def determine_if_mergeable():
   for user, state in sorted(reviews.items()):
     print ('  %s: %s' % (user, state))
 
-  approval_count = 0
+  approvals = []
+  rejections = []
   for user in users:
-    if reviews.get(user, None) == 'APPROVED':
-      approval_count += 1
+    if user in reviews:
+      review = reviews[user]
+      if review == 'APPROVED':
+        approvals.append(user)
+      else:
+        rejections.append(user)
 
-  if approval_count < len(users):
-    raise Exception('Insufficient approval.')
+  if rejections:
+    raise Exception('Rejected by: %s' % (' '.join(rejections)))
+
+  required_approvals = len(users)
+
+  # Allow three days to go by with no commits, but if longer happens then start
+  # lowering the threshold for allowing a commit.
+  approvals_to_skip = days_since_last_commit() - 3
+  if approvals_to_skip > 0:
+    print("Skipping up to %s approvals, because it's been %s days"
+          " since the last commit." % (approvals_to_skip,
+                                      days_since_last_commit()))
+    required_approvals -= approvals_to_skip
+
+  print('Approvals: got %s (%s) needed %s' % (
+      len(approvals), ' '.join(approvals), required_approvals))
+
+  if len(approvals) < required_approvals:
+    raise Exception('Insufficient approval')
 
   print('\nPASS')
 
