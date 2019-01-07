@@ -1,7 +1,7 @@
 # nomic
 
 ## Joining
-=======
+
 Make a pull request to add your github username to players/.
 
 If jeffkaufman doesn't add you to the list of repo collaborators, ping him to
