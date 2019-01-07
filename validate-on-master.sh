@@ -19,7 +19,7 @@ if [ -d tmp-nomic-master ]; then
   rm -rf tmp-nomic-master
 fi
 
-git clone --depth=1 https://github.com/${TRAVIS_REPO_SLUG}.git tmp-nomic-master
+git clone https://github.com/${TRAVIS_REPO_SLUG}.git tmp-nomic-master
 
 cd tmp-nomic-master
 
