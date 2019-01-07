@@ -1,6 +1,6 @@
 # nomic
 
-To join the game, make a pull request to add your github username to players.txt.
+To join the game, make a pull request to add your github username to players/.
 Then ping Jeff so you can be added to the repo collaborators.
 
 Once you're playing, propose rule changes by making pull requests.
