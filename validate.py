@@ -145,17 +145,13 @@ def determine_if_mergeable():
 
   days_since_last_changed = seconds_to_days(
     seconds_since(pr_last_changed_ts(pr_json)))
-  if days_since_last_changed > 1:
-    print('This PR has been sitting for at least a day (%sd) with'
-          ' no rejections.  Considering whether to merge it.' %
-          days_since_last_changed)
-    if len(approvals) > len(users)/2:
-      print('Allowing merge with just a majority.')
-      print('PASS')
-      return
+
+  print('FYI: this PR has been sitting for %s days' % (
+      days_since_last_changed))
 
   required_approvals = len(users)
 
+  # Allow three days to go by with no commits, but if longer happens then start
   # lowering the threshold for allowing a commit.
   approvals_to_skip = seconds_to_days(seconds_since(last_commit_ts())) - 3
   if approvals_to_skip > 0:
