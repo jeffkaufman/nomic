@@ -104,12 +104,13 @@ def get_user_points():
     raise Exception(completed_process)
   process_output = completed_process.stdout.decode('utf-8')
 
-  merge_regexp = '^Merge pull request #[\\d]* from ([^/]*)/'
+  merge_regexp = '^Merge pull request #([\\d]*) from ([^/]*)/'
   for commit_subject in process_output.split('\n'):
     match = re.match(merge_regexp, commit_subject)
     if match:
-      commit_username, = match.groups()
-      if commit_username in points:
+      pr_number, commit_username = match.groups()
+
+      if int(pr_number) > 33 and commit_username in points:
         points[commit_username] += 1
 
   return points
