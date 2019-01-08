@@ -127,6 +127,10 @@ def determine_if_mergeable():
       else:
         rejections.append(user)
 
+  non_participants = [ user for user in users
+                       if user not in approvals
+                       and user not in rejections ]
+
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
@@ -141,8 +145,11 @@ def determine_if_mergeable():
                                       days_since_last_commit()))
     required_approvals -= approvals_to_skip
 
-  print('Approvals: got %s (%s) needed %s' % (
-      len(approvals), ' '.join(approvals), required_approvals))
+  print('Approvals: got %s (%s) needed %s (%s)' % (
+      len(approvals),
+      ' '.join(approvals),
+      required_approvals,
+      ' '.join(rejections + non_participants)))
 
   if len(approvals) < required_approvals:
     raise Exception('Insufficient approval')
