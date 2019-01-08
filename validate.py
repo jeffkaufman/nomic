@@ -95,7 +95,7 @@ def get_user_points():
     with open(os.path.join('players', user)) as inf:
       try:
         points[user] += int(inf.read())
-      except ValueError:
+      except:
         pass
 
   cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
