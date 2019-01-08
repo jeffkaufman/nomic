@@ -82,13 +82,7 @@ def get_reviews():
       return reviews
 
 def get_users():
-  users = set()
-  with open('players.txt') as inf:
-    for line in inf:
-      line = line.strip()
-      if line:
-        users.add(line.strip())
-  return list(sorted(users))
+  return list(sorted(os.listdir('players/')))
 
 def iso8601_to_ts(iso8601):
   return int(time.mktime(time.strptime(iso8601, "%Y-%m-%dT%H:%M:%SZ")))
