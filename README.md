@@ -2,7 +2,9 @@
 
 ## Joining
 
-Make a pull request to add your github username to players/.
+Make a pull request to add your github username a file with your github 
+username as it's name to players/. The file should contain the number 10.
+Then ping Jeff so you can be added to the repo collaborators.
 
 If jeffkaufman doesn't add you to the list of repo collaborators, ping him to
 ask him to.  This will allow you to press the merge button yourself.
