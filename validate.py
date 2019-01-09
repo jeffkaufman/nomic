@@ -107,11 +107,16 @@ def get_user_points():
 
   merge_regexp = '^Merge pull request #([\\d]*) from ([^/]*)/'
   for commit_subject in process_output.split('\n'):
+    # Iterate through all commits in reverse chronological order.
+
     match = re.match(merge_regexp, commit_subject)
     if match:
+      # Regexp match means this is a merge commit.
+
       pr_number, commit_username = match.groups()
 
       if int(pr_number) == 33:
+        # Only look at PRs merged after this one.
         break
 
       if commit_username in points:
@@ -184,10 +189,6 @@ def determine_if_mergeable():
   print('\nPASS')
 
 def determine_if_winner():
-  print('Points:')
-  for user, user_points in get_user_points().items():
-    print('  %s: %s' % (user, user_points))
-
   users = get_users()
   for user in users:
     if random.random() < 0.0001:
