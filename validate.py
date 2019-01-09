@@ -4,6 +4,7 @@ import random
 import requests
 import subprocess
 import time
+import datetime
 
 def request(url):
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
@@ -103,7 +104,8 @@ def days_since_last_commit():
 
 def days_since_pr_created():
   response = request(base_pr_url())
-  return int(time.time() - response.json()['created_at'])
+  created_at = int(time.mktime(time.strptime(response.json()['created_at'], "%Y-%m-%dT%H:%M:%SZ")))
+  return int((time.time() - created_at) / 60 / 60 / 24)
 
 def determine_if_mergeable():
   users = get_users()
