@@ -86,6 +86,20 @@ def get_reviews():
 def get_users():
   return list(sorted(os.listdir('players/')))
 
+def get_user_points():
+  points = {}
+
+  for user in get_users():
+    points[user] = 0
+
+    bonus_directory = os.path.join('players', user, 'bonuses')
+    if os.path.isdir(bonus_directory):
+      for named_bonus in os.listdir(bonus_directory):
+        with open(os.path.join(bonus_directory, named_bonus)) as inf:
+          points[user] += int(inf.read())
+
+  return points
+
 def last_commit_ts():
   # When was the last commit on master?
   cmd = ['git', 'log', 'master', '-1', '--format=%ct']
@@ -101,7 +115,14 @@ def seconds_since_last_commit():
 def days_since_last_commit():
   return int(seconds_since_last_commit() / 60 / 60 / 24)
 
+def print_points():
+  print('Points:')
+  for user, user_points in get_user_points().items():
+    print('  %s: %s' % (user, user_points))
+
 def determine_if_mergeable():
+  print_points()
+
   users = get_users()
   print('Users:')
   for user in users:
@@ -151,6 +172,8 @@ def determine_if_mergeable():
   print('\nPASS')
 
 def determine_if_winner():
+  print_points()
+
   users = get_users()
   for user in users:
     if random.random() < 0.0001:
