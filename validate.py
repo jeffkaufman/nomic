@@ -122,7 +122,6 @@ def get_user_points():
       pr_number, commit_username = match.groups()
 
       if int(pr_number) == 33:
-        # Don't count this PR, or any PRs merged before it.
         break
 
       if commit_username in points:
