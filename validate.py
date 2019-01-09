@@ -101,6 +101,58 @@ def seconds_since_last_commit():
 def days_since_last_commit():
   return int(seconds_since_last_commit() / 60 / 60 / 24)
 
+def mergeable_as_points_transfer(diff, approvals, rejections):
+  # If a PR only moves points around by the creation of new bonus files, has
+  # been approved by every player losing points, and doesn't change the total
+  # number of points, allow it.
+
+  if diff.modified_files or diff.removed_files:
+    return False
+
+  print('\nConsidering whether this can be merged as a points transfer:')
+
+  total_points_change = 0
+
+  for added_file in diff.added_files:
+    path_components = added_file.path.split('/')
+    diff_lines = str(added_file).split('\n')
+
+    if (len(path_components) != 4 or
+        len(diff_lines) != 8 or
+        path_components[0] != 'players' or
+        path_components[2] != 'bonuses' or
+        diff_lines[0] != 'diff --git a/%s b/%s' % (added_file.path,
+                                                   added_file.path) or
+        diff_lines[1] != 'new file mode 100644' or
+        diff_lines[3] != '--- /dev/null' or
+        diff_lines[4] != '+++ b/%s' % added_file.path or
+        diff_lines[5] != '@@ -0,0 +1,1 @@' or
+        not diff_lines[6].startswith('+') or
+        diff_lines[7] != ''):
+      print("  no: doesn't meet basic checks")
+      return False
+
+    points_user = path_components[1]
+
+    # If this isn't an int, then it raises and the PR isn't mergeable
+    points_change = int(diff_lines[6][1:])
+
+    total_points_change += points_change
+
+    if points_change < 0:
+      if points_user not in approvals:
+        print('Taking %s points from %s requires their approval.' % (
+            abs(points_change), points_user))
+        return False
+
+  if total_points_change != 0:
+    print("  no: saw a net change of %s points." %
+          total_points_change)
+    return False
+
+  print('  yes')
+  return True
+
 def determine_if_mergeable():
   users = get_users()
   print('Users:')
@@ -127,6 +179,10 @@ def determine_if_mergeable():
         approvals.append(user)
       else:
         rejections.append(user)
+
+  if mergeable_as_points_transfer(diff, approvals, rejections):
+    print('Meets requirements for points transfer.  PASS')
+    return
 
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
