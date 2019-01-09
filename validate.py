@@ -154,8 +154,9 @@ def determine_if_mergeable():
   if len(approvals) < required_approvals:
     raise Exception('Insufficient approval')
 
-  if days_since_pr_created() < 1:
-    raise Exception('PR created within last 24 hours')
+  # Don't allow PRs to be merged the day they're created unless they pass unanimously
+  if (len(approvals) < len(users)) and (days_since_pr_created() < 1):
+    raise Exception('PR created within last 24 hours does not have unanimous approval.')
 
   print('\nPASS')
 
