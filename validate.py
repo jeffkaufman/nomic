@@ -1,4 +1,5 @@
 import os
+import math
 import random
 import requests
 import subprocess
@@ -149,7 +150,7 @@ def determine_if_mergeable():
   print('FYI: this PR has been sitting for %s days' % (
       days_since_last_changed))
 
-  required_approvals = len(users)
+  required_approvals = math.ceil(len(users) * 2 / 3)
 
   # Allow three days to go by with no commits, but if longer happens then start
   # lowering the threshold for allowing a commit.
