@@ -4,6 +4,7 @@ import random
 import requests
 import subprocess
 import time
+import unidiff
 
 def request(url):
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
@@ -29,6 +30,12 @@ def get_pr():
 
 def get_commit():
   return os.environ['TRAVIS_PULL_REQUEST_SHA']
+
+def get_pr_diff():
+  # Allow inspecting the changes this PR introduces.
+  response = request('https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff' % (
+      get_repo(), get_pr()))
+  return unidiff.PatchSet(response.content.decode('utf-8'))
 
 def base_pr_url():
   # This is configured in nginx like:
@@ -101,7 +108,23 @@ def seconds_since_last_commit():
 def days_since_last_commit():
   return int(seconds_since_last_commit() / 60 / 60 / 24)
 
+def print_file_changes(diff):
+  print('\n')
+  for category, category_list in [
+    ('added', diff.added_files),
+    ('modified', diff.modified_files),
+    ('removed', diff.removed_files)]:
+
+    if category_list:
+      print('%s:' % category)
+      for patched_file in category_list:
+        print('  %s' % patched_file.path)
+  print()
+
 def determine_if_mergeable():
+  diff = get_pr_diff()
+  print_file_changes(diff)
+
   users = get_users()
   print('Users:')
   for user in users:
