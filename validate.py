@@ -93,21 +93,11 @@ def get_user_points():
   for user in get_users():
     points[user] = 0
 
-    bonus_directory = os.path.join('players', user, 'bonuses')
-    if os.path.isdir(bonus_directory):
-      for named_bonus in os.listdir(bonus_directory):
-        with open(os.path.join(bonus_directory, named_bonus)) as inf:
-          try:
-            points[user] += int(inf.read())
-          except:
-            pass
-    else:
-      # This branch can be deleted after #47 is merged.
-      with open(os.path.join('players', user)) as inf:
-        try:
-          points[user] += int(inf.read())
-        except:
-          pass
+    with open(os.path.join('players', user)) as inf:
+      try:
+        points[user] += int(inf.read())
+      except:
+        pass
 
   cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
