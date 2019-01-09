@@ -1,4 +1,5 @@
 import os
+import math
 import random
 import requests
 import subprocess
@@ -130,7 +131,7 @@ def determine_if_mergeable():
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
-  required_approvals = len(users)
+  required_approvals = math.ceil(len(users) * 2 / 3)
 
   # Allow three days to go by with no commits, but if longer happens then start
   # lowering the threshold for allowing a commit.
