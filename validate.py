@@ -111,7 +111,10 @@ def get_user_points():
     if match:
       pr_number, commit_username = match.groups()
 
-      if int(pr_number) > 33 and commit_username in points:
+      if int(pr_number) == 33:
+        break
+
+      if commit_username in points:
         points[commit_username] += 1
 
   return points
