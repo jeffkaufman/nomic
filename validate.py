@@ -101,6 +101,10 @@ def seconds_since_last_commit():
 def days_since_last_commit():
   return int(seconds_since_last_commit() / 60 / 60 / 24)
 
+def days_since_pr_created():
+  response = request(base_pr_url())
+  return int(time.time() - response.json()['created_at'])
+
 def determine_if_mergeable():
   users = get_users()
   print('Users:')
@@ -147,6 +151,9 @@ def determine_if_mergeable():
 
   if len(approvals) < required_approvals:
     raise Exception('Insufficient approval')
+
+  if days_since_pr_created() < 1:
+    raise Exception('PR created within last 24 hours')
 
   print('\nPASS')
 
