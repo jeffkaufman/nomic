@@ -8,3 +8,5 @@ script:
 branches:
   only:
     - master
+git:
+  depth: false
