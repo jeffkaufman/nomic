@@ -120,10 +120,8 @@ def seconds_since(ts):
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
 
-def days_since_pr_created():
-  response = request(base_pr_url())
-  created_at = int(time.mktime(time.strptime(response.json()['created_at'], "%Y-%m-%dT%H:%M:%SZ")))
-  return int((time.time() - created_at) / 60 / 60 / 24)
+def days_since_pr_created(pr_json):
+  return seconds_to_days(seconds_since(pr_created_at_ts(pr_json)))
 
 def determine_if_mergeable():
   users = get_users()
@@ -180,7 +178,7 @@ def determine_if_mergeable():
     raise Exception('Insufficient approval')
 
   # Don't allow PRs to be merged the day they're created unless they pass unanimously
-  if (len(approvals) < len(users)) and (days_since_pr_created() < 1):
+  if (len(approvals) < len(users)) and (days_since_pr_created(pr_json) < 1):
     raise Exception('PR created within last 24 hours does not have unanimous approval.')
 
   print('\nPASS')
