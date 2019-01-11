@@ -69,6 +69,12 @@ def get_reviews():
 
       print('  %s: %s at %s' % (user, state, commit))
       if state == 'APPROVED' and commit != target_commit:
+        # An approval clears out any past rejections from a user.
+        try:
+          del reviews[user]
+        except KeyError:
+          pass # No past rejections for this user.
+
         # Only accept approvals for the most recent commit, but have rejections
         # last until overridden.
         continue
