@@ -119,6 +119,9 @@ def seconds_since(ts):
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
 
+def days_since_last_commit():
+  return seconds_to_days(seconds_since(last_commit_ts()))
+
 def determine_if_mergeable():
   users = get_users()
   print('Users:')
@@ -160,7 +163,7 @@ def determine_if_mergeable():
 
   # Allow three days to go by with no commits, but if longer happens then start
   # lowering the threshold for allowing a commit.
-  approvals_to_skip = seconds_to_days(seconds_since(last_commit_ts())) - 3
+  approvals_to_skip = days_since_last_commit() - 3
   if approvals_to_skip > 0:
     print("Skipping up to %s approvals, because it's been %s days"
           " since the last commit." % (approvals_to_skip,
