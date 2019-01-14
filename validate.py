@@ -120,8 +120,14 @@ def seconds_since(ts):
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
 
+def days_since(ts):
+  return seconds_to_days(seconds_since(ts))
+
+def days_since_last_commit():
+  return days_since(last_commit_ts())
+
 def days_since_pr_created(pr_json):
-  return seconds_to_days(seconds_since(pr_created_at_ts(pr_json)))
+  return days_since(pr_created_at_ts(pr_json))
 
 def determine_if_mergeable():
   users = get_users()
@@ -154,8 +160,7 @@ def determine_if_mergeable():
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
-  days_since_last_changed = seconds_to_days(
-    seconds_since(pr_last_changed_ts(pr_json)))
+  days_since_last_changed = days_since(pr_last_changed_ts(pr_json))
 
   print('FYI: this PR has been sitting for %s days' % (
       days_since_last_changed))
@@ -164,7 +169,7 @@ def determine_if_mergeable():
 
   # Allow three days to go by with no commits, but if longer happens then start
   # lowering the threshold for allowing a commit.
-  approvals_to_skip = seconds_to_days(seconds_since(last_commit_ts())) - 3
+  approvals_to_skip = days_since_last_commit() - 3
   if approvals_to_skip > 0:
     print("Skipping up to %s approvals, because it's been %s days"
           " since the last commit." % (approvals_to_skip,
