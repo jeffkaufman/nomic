@@ -1,6 +1,7 @@
 import os
 import math
 import random
+import re
 import requests
 import subprocess
 import time
@@ -97,6 +98,43 @@ def get_reviews():
 
 def get_users():
   return list(sorted(os.listdir('players/')))
+
+def get_user_points():
+  points = {}
+
+  for user in get_users():
+    points[user] = 0
+
+    with open(os.path.join('players', user)) as inf:
+      try:
+        points[user] += int(inf.read())
+      except:
+        pass
+
+  cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
+  completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
+  if completed_process.returncode != 0:
+    raise Exception(completed_process)
+  process_output = completed_process.stdout.decode('utf-8')
+
+  merge_regexp = '^Merge pull request #([\\d]*) from ([^/]*)/'
+  for commit_subject in process_output.split('\n'):
+    # Iterate through all commits in reverse chronological order.
+
+    match = re.match(merge_regexp, commit_subject)
+    if match:
+      # Regexp match means this is a merge commit.
+
+      pr_number, commit_username = match.groups()
+
+      if int(pr_number) == 33:
+        # Only look at PRs merged after this one.
+        break
+
+      if commit_username in points:
+        points[commit_username] += 1
+
+  return points
 
 def iso8601_to_ts(iso8601):
   return int(time.mktime(time.strptime(iso8601, "%Y-%m-%dT%H:%M:%SZ")))
