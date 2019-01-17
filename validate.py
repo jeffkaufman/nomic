@@ -62,7 +62,8 @@ def get_reviews():
   target_commit = get_commit()
   print('Considering reviews at commit %s' % target_commit)
 
-  url = '%s/reviews' % base_pr_url()
+  base_url = '%s/reviews' % base_pr_url()
+  url = base_url
   reviews = {}
 
   while True:
@@ -91,7 +92,12 @@ def get_reviews():
       reviews[user] = state
 
     if 'next' in response.links:
-      url = response.links['next']['url']
+      # This unfortunately points to GitHub, and not to the rate-limit-avoiding
+      # proxy.  Pull off the query string (ex: "?page=3") and append that to
+      # our url that goes via the proxy.
+      next_url = response.links['next']['url']
+      github_api_path, query_string = next_url.split('?')
+      url = '%s?%s' % (base_url, query_string)
     else:
       return reviews
 
