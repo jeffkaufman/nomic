@@ -40,7 +40,18 @@ def get_pr_diff():
 def base_pr_url():
   # This is configured in nginx like:
   #
+  # proxy_cache_path
+  #     /tmp/github-proxy
+  #     levels=1:2
+  #     keys_zone=github-proxy:1m
+  #     max_size=100m;
+  #
+  # server {
+  #   ...
   #   location /nomic-github/repos/jeffkaufman/nomic {
+  #     proxy_cache github-proxy;
+  #     proxy_ignore_headers Cache-Control Vary;
+  #     proxy_cache_valid any 1m;
   #     proxy_pass https://api.github.com/repos/jeffkaufman/nomic;
   #     proxy_set_header
   #         Authorization
@@ -52,6 +63,16 @@ def base_pr_url():
   #
   # There's an API limit of 60/hr per IP by default, and 5000/hr by
   # user, and we need the higher limit.
+  #
+  # Responses are cached for one minute by this proxy.  The caching is
+  # optional, but now that https:/www.jefftk.com/nomic is available and
+  # world-accessible it could potentilly get hit by substantial traffic.  At a
+  # 60s cache and 5k/hr limit we can have 83 GitHub API requests per page
+  # render and not go down.  As of 2018-01-18 there are eight open PRs, each
+  # of which needs a request to get reviews, so we're ok by a factor of 10.  If
+  # we have a lot of old open PRs we don't care about we could either close
+  # them or make the dashboard only gather reviews for PRs in the "reviewme"
+  # state.
   return 'https://www.jefftk.com/nomic-github/repos/%s/pulls/%s' % (
     get_repo(), get_pr())
 
