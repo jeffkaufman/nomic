@@ -12,7 +12,7 @@ ask him to.  This will allow you to press the merge button yourself.
 ## Playing
 
 Once you're playing, propose rule changes by making pull requests.  There are
-no turns, just go for it.  Vote on other people's changes by reviewing them.
+no turns, just go for it.  Vote on other people's changes by reviewing them.  Use the dashboard found at https://www.jefftk.com/nomic to track which PRs you haven't reviewed.
 
 ## Winning
 
