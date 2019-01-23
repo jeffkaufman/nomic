@@ -1,6 +1,7 @@
 import os
 import math
 import random
+import re
 import requests
 import subprocess
 import time
@@ -62,7 +63,8 @@ def get_reviews():
   target_commit = get_commit()
   print('Considering reviews at commit %s' % target_commit)
 
-  url = '%s/reviews' % base_pr_url()
+  base_url = '%s/reviews' % base_pr_url()
+  url = base_url
   reviews = {}
 
   while True:
@@ -91,12 +93,54 @@ def get_reviews():
       reviews[user] = state
 
     if 'next' in response.links:
-      url = response.links['next']['url']
+      # This unfortunately points to GitHub, and not to the rate-limit-avoiding
+      # proxy.  Pull off the query string (ex: "?page=3") and append that to
+      # our url that goes via the proxy.
+      next_url = response.links['next']['url']
+      github_api_path, query_string = next_url.split('?')
+      url = '%s?%s' % (base_url, query_string)
     else:
       return reviews
 
 def get_users():
   return list(sorted(os.listdir('players/')))
+
+def get_user_points():
+  points = {}
+
+  for user in get_users():
+    points[user] = 0
+
+    with open(os.path.join('players', user)) as inf:
+      try:
+        points[user] += int(inf.read())
+      except:
+        pass
+
+  cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
+  completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
+  if completed_process.returncode != 0:
+    raise Exception(completed_process)
+  process_output = completed_process.stdout.decode('utf-8')
+
+  merge_regexp = '^Merge pull request #([\\d]*) from ([^/]*)/'
+  for commit_subject in process_output.split('\n'):
+    # Iterate through all commits in reverse chronological order.
+
+    match = re.match(merge_regexp, commit_subject)
+    if match:
+      # Regexp match means this is a merge commit.
+
+      pr_number, commit_username = match.groups()
+
+      if int(pr_number) == 33:
+        # Only look at PRs merged after this one.
+        break
+
+      if commit_username in points:
+        points[commit_username] += 1
+
+  return points
 
 def iso8601_to_ts(iso8601):
   return int(time.mktime(time.strptime(iso8601, "%Y-%m-%dT%H:%M:%SZ")))
@@ -126,8 +170,14 @@ def seconds_since(ts):
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
 
+def days_since(ts):
+  return seconds_to_days(seconds_since(ts))
+
 def days_since_last_commit():
-  return seconds_to_days(seconds_since(last_commit_ts()))
+  return days_since(last_commit_ts())
+
+def days_since_pr_created(pr_json):
+  return days_since(pr_created_at_ts(pr_json))
 
 def print_file_changes(diff):
   print('\n')
@@ -176,8 +226,7 @@ def determine_if_mergeable():
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
-  days_since_last_changed = seconds_to_days(
-    seconds_since(pr_last_changed_ts(pr_json)))
+  days_since_last_changed = days_since(pr_last_changed_ts(pr_json))
 
   print('FYI: this PR has been sitting for %s days' % (
       days_since_last_changed))
@@ -198,6 +247,10 @@ def determine_if_mergeable():
 
   if len(approvals) < required_approvals:
     raise Exception('Insufficient approval')
+
+  # Don't allow PRs to be merged the day they're created unless they pass unanimously
+  if (len(approvals) < len(users)) and (days_since_pr_created(pr_json) < 1):
+    raise Exception('PR created within last 24 hours does not have unanimous approval.')
 
   print('\nPASS')
 
