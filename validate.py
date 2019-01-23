@@ -170,8 +170,14 @@ def seconds_since(ts):
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
 
+def days_since(ts):
+  return seconds_to_days(seconds_since(ts))
+
 def days_since_last_commit():
-  return seconds_to_days(seconds_since(last_commit_ts()))
+  return days_since(last_commit_ts())
+
+def days_since_pr_created(pr_json):
+  return days_since(pr_created_at_ts(pr_json))
 
 def print_file_changes(diff):
   print('\n')
@@ -220,8 +226,7 @@ def determine_if_mergeable():
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
-  days_since_last_changed = seconds_to_days(
-    seconds_since(pr_last_changed_ts(pr_json)))
+  days_since_last_changed = days_since(pr_last_changed_ts(pr_json))
 
   print('FYI: this PR has been sitting for %s days' % (
       days_since_last_changed))
@@ -242,6 +247,10 @@ def determine_if_mergeable():
 
   if len(approvals) < required_approvals:
     raise Exception('Insufficient approval')
+
+  # Don't allow PRs to be merged the day they're created unless they pass unanimously
+  if (len(approvals) < len(users)) and (days_since_pr_created(pr_json) < 1):
+    raise Exception('PR created within last 24 hours does not have unanimous approval.')
 
   print('\nPASS')
 
