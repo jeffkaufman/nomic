@@ -10,3 +10,7 @@ branches:
     - master
 git:
   depth: false
+notifications:
+  email:
+    on_success: never
+    on_failure: always
