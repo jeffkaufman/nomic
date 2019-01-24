@@ -132,11 +132,11 @@ def get_user_points():
   for user in get_users():
     points[user] = 0
 
-    with open(os.path.join('players', user)) as inf:
-      try:
-        points[user] += int(inf.read())
-      except:
-        pass
+    bonus_directory = os.path.join('players', user, 'bonuses')
+    if os.path.isdir(bonus_directory):
+      for named_bonus in os.listdir(bonus_directory):
+        with open(os.path.join(bonus_directory, named_bonus)) as inf:
+          points[user] += int(inf.read())
 
   cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
@@ -190,6 +190,11 @@ def seconds_since(ts):
 
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
+
+def print_points():
+  print('Points:')
+  for user, user_points in get_user_points().items():
+    print('  %s: %s' % (user, user_points))
 
 def days_since(ts):
   return seconds_to_days(seconds_since(ts))
@@ -291,6 +296,8 @@ def mergeable_as_points_transfer(diff, approvals, rejections):
   print('  yes')
 
 def determine_if_mergeable():
+  print_points()
+
   diff = get_pr_diff()
   print_file_changes(diff)
 
@@ -329,6 +336,14 @@ def determine_if_mergeable():
     print('Meets requirements for points transfer.  PASS')
     return
 
+  non_participants = [ user for user in users
+                       if user not in approvals
+                       and user not in rejections ]
+
+  print('Approvals: %s - %s' % (len(approvals), ' '.join(approvals)))
+  print('Rejections: %s - %s' %(len(rejections), ' '.join(rejections)))
+  print('Non-participants: %s - %s' %(len(non_participants), ' '.join(non_participants)))
+
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
@@ -348,11 +363,8 @@ def determine_if_mergeable():
                                       days_since_last_commit()))
     required_approvals -= approvals_to_skip
 
-  print('Approvals: got %s (%s) needed %s' % (
-      len(approvals), ' '.join(approvals), required_approvals))
-
   if len(approvals) < required_approvals:
-    raise Exception('Insufficient approval')
+    raise Exception('Insufficient approval: got %s out of %s required approvals' % (len(approvals), required_approvals))
 
   # Don't allow PRs to be merged the day they're created unless they pass unanimously
   if (len(approvals) < len(users)) and (days_since_pr_created(pr_json) < 1):
@@ -361,6 +373,8 @@ def determine_if_mergeable():
   print('\nPASS')
 
 def determine_if_winner():
+  print_points()
+
   users = get_users()
   for user in users:
     if random.random() < 0.0001:
