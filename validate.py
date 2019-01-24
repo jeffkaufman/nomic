@@ -215,55 +215,78 @@ def print_file_changes(diff):
 
 def mergeable_as_points_transfer(diff, approvals, rejections):
   # If a PR only moves points around by the creation of new bonus files, has
-  # been approved by every player losing points, and doesn't change the total
-  # number of points, allow it.
-
-  if diff.modified_files or diff.removed_files:
-    return False
+  # been approved by every player losing points, reduces the total number of
+  # points, allow it.
+  #
+  # Having a PR merged gives you a point (#33), so a PR like:
+  #
+  #  - me:  -2 points
+  #  - you: +1 point
+  #
+  # is effectively:
+  #
+  #  - me:  -1 point
+  #  - you: +1 point
 
   print('\nConsidering whether this can be merged as a points transfer:')
+
+  if diff.modified_files or diff.removed_files:
+    raise Exception('All file changes must be additions')
 
   total_points_change = 0
 
   for added_file in diff.added_files:
-    path_components = added_file.path.split('/')
-    diff_lines = str(added_file).split('\n')
+    s_players, points_user, s_bonuses, bonus_name =  added_file.path.split('/')
+    if s_players != 'players' or s_bonuses != 'bonuses':
+      raise Exception('Added file %s is not a bonus file')
 
-    if (len(path_components) != 4 or
-        len(diff_lines) != 8 or
-        path_components[0] != 'players' or
-        path_components[2] != 'bonuses' or
-        diff_lines[0] != 'diff --git a/%s b/%s' % (added_file.path,
-                                                   added_file.path) or
-        diff_lines[1] != 'new file mode 100644' or
-        diff_lines[3] != '--- /dev/null' or
-        diff_lines[4] != '+++ b/%s' % added_file.path or
-        diff_lines[5] != '@@ -0,0 +1,1 @@' or
-        not diff_lines[6].startswith('+') or
-        diff_lines[7] != ''):
-      print("  no: doesn't meet basic checks")
-      return False
+    (diff_invocation_line, file_mode_line, _, removed_file_line,
+     added_file_line, patch_location_line, file_delta_line,
+     empty_line) = str(added_file).split('\n')
 
-    points_user = path_components[1]
+    if diff_invocation_line != 'diff --git a/%s b/%s' % (
+        added_file.path, added_file.path):
+      raise Exception('Unexpected diff invocation: %s' % diff_invocation_line)
+
+    if file_mode_line != 'new file mode 100644':
+      raise Exception('File added with incorrect mode: %s' % file_mode_line)
+
+    if removed_file_line != '--- /dev/null':
+      raise Exception(
+        'Diff format makes no sense: added files should say they are from /dev/null')
+
+    if added_file_line != '+++ b/%s' % added_file.path:
+      raise Exception('Something wrong with file adding line: file is '
+                      '%s but got %s' % (added_file.path, added_file_line))
+
+    if patch_location_line != '@@ -0,0 +1,1 @@':
+      raise Exception('Patch location makes no sense: %s' %
+                      patch_location_line)
+
+    if empty_line:
+      raise Exception('Last line should be empty')
+
+    if file_delta_line.startswith('+'):
+      actual_file_delta = file_delta_line[1:]
+    else:
+      raise Exception('File delta missing initial + for addition: %s' %
+                      file_delta_line)
 
     # If this isn't an int, then it raises and the PR isn't mergeable
-    points_change = int(diff_lines[6][1:])
-
-    total_points_change += points_change
+    points_change = int(actual_file_delta)
 
     if points_change < 0:
       if points_user not in approvals:
-        print('Taking %s points from %s requires their approval.' % (
+        raise Exception('Taking %s points from %s requires their approval.' % (
             abs(points_change), points_user))
-        return False
 
-  if total_points_change != 0:
-    print("  no: saw a net change of %s points." %
-          total_points_change)
-    return False
+    total_points_change += points_change
 
+  if total_points_change >= 0:
+    raise Exception('points change PRs must on net remove points')
+
+  # Returning without an exception is how we indicate success.
   print('  yes')
-  return True
 
 def determine_if_mergeable():
   diff = get_pr_diff()
@@ -296,7 +319,11 @@ def determine_if_mergeable():
       else:
         rejections.append(user)
 
-  if mergeable_as_points_transfer(diff, approvals, rejections):
+  try:
+    mergeable_as_points_transfer(diff, approvals, rejections)
+  except Exception as e:
+    print("Doesn't meet requirements for points transfer: %s" % e)
+  else:
     print('Meets requirements for points transfer.  PASS')
     return
 
