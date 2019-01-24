@@ -251,6 +251,14 @@ def determine_if_mergeable():
       else:
         rejections.append(user)
 
+  non_participants = [ user for user in users
+                       if user not in approvals
+                       and user not in rejections ]
+
+  print('Approvals: %s - %s' % (len(approvals), ' '.join(approvals)))
+  print('Rejections: %s - %s' %(len(rejections), ' '.join(rejections)))
+  print('Non-participants: %s - %s' %(len(non_participants), ' '.join(non_participants)))
+
   if rejections:
     raise Exception('Rejected by: %s' % (' '.join(rejections)))
 
@@ -270,11 +278,8 @@ def determine_if_mergeable():
                                       days_since_last_commit()))
     required_approvals -= approvals_to_skip
 
-  print('Approvals: got %s (%s) needed %s' % (
-      len(approvals), ' '.join(approvals), required_approvals))
-
   if len(approvals) < required_approvals:
-    raise Exception('Insufficient approval')
+    raise Exception('Insufficient approval: got %s out of %s required approvals' % (len(approvals), required_approvals))
 
   # Don't allow PRs to be merged the day they're created unless they pass unanimously
   if (len(approvals) < len(users)) and (days_since_pr_created(pr_json) < 1):
