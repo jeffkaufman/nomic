@@ -218,6 +218,8 @@ def mergeable_as_points_transfer(diff, approvals, rejections):
   # been approved by every player losing points, reduces the total number of
   # points, allow it.
   #
+  # Returns to indicate yes, raises an exception to indicate no.
+  #
   # Having a PR merged gives you a point (#33), so a PR like:
   #
   #  - me:  -2 points
