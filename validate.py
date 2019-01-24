@@ -290,10 +290,9 @@ def determine_if_mergeable():
 def determine_if_winner():
   print_points()
 
-  users = get_users()
-  for user in users:
-    if random.random() < 0.0001:
-      raise RuntimeException('%s wins!' % user)
+  for user, user_points in get_user_points().items():
+    if random.random() < 0.00001 * user_points:
+      raise Exception('%s wins!' % user)
   print('The game continues.')
 
 def start():
