@@ -5,6 +5,9 @@
 
 set -e  # die on failure
 
+echo 'Testing that build failures send notifications'
+exit 1
+
 if [ -z "$TRAVIS_REPO_SLUG" ]; then
   echo "Missing repo."
   exit 1
