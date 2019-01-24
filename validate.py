@@ -132,11 +132,11 @@ def get_user_points():
   for user in get_users():
     points[user] = 0
 
-    with open(os.path.join('players', user)) as inf:
-      try:
-        points[user] += int(inf.read())
-      except:
-        pass
+    bonus_directory = os.path.join('players', user, 'bonuses')
+    if os.path.isdir(bonus_directory):
+      for named_bonus in os.listdir(bonus_directory):
+        with open(os.path.join(bonus_directory, named_bonus)) as inf:
+          points[user] += int(inf.read())
 
   cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
@@ -191,6 +191,11 @@ def seconds_since(ts):
 def seconds_to_days(seconds):
   return int(seconds / 60 / 60 / 24)
 
+def print_points():
+  print('Points:')
+  for user, user_points in get_user_points().items():
+    print('  %s: %s' % (user, user_points))
+
 def days_since(ts):
   return seconds_to_days(seconds_since(ts))
 
@@ -214,6 +219,8 @@ def print_file_changes(diff):
   print()
 
 def determine_if_mergeable():
+  print_points()
+
   diff = get_pr_diff()
   print_file_changes(diff)
 
@@ -276,6 +283,8 @@ def determine_if_mergeable():
   print('\nPASS')
 
 def determine_if_winner():
+  print_points()
+
   users = get_users()
   for user in users:
     if random.random() < 0.0001:
