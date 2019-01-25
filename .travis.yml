@@ -10,3 +10,9 @@ branches:
     - master
 git:
   depth: false
+notifications:
+  email:
+    recipients:
+      - jeff@jefftk.com
+    on_success: never
+    on_failure: always
