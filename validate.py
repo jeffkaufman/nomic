@@ -67,7 +67,7 @@ def print_file_changes(pr):
       print('%s:' % category)
       for patched_file in category_list:
         print('  %s' % patched_file.path)
-        print()
+  print()
 
 def mergeable_as_points_transfer(pr):
   # If a PR only moves points around by the creation of new bonus files, has
@@ -158,6 +158,9 @@ def print_status(pr):
   print('Rejections: %s - %s' %(len(pr.rejections), ' '.join(pr.rejections)))
   print('Non-participants: %s - %s' %(len(pr.non_participants), ' '.join(pr.non_participants)))
 
+  print('\nFYI: this PR has been sitting for %s days' % (
+      pr.days_since_changed()))
+
   print_file_changes(pr)
 
 def determine_if_mergeable(pr):
@@ -174,9 +177,6 @@ def determine_if_mergeable(pr):
 
   if pr.rejections:
     raise Exception('Rejected by: %s' % (' '.join(pr.rejections)))
-
-  print('FYI: this PR has been sitting for %s days' % (
-      pr.days_since_changed()))
 
   required_approvals = math.ceil(len(util.users()) * 2 / 3)
 
