@@ -11,16 +11,18 @@ class PullRequest:
 
     self._pr_json = util.request(self._base_pr_url()).json()
 
+    # Hash from user names to booleans representing whether the user has
+    # approved or rejected the PR.
     self.reviews = self._calculate_reviews()
+
     if self.author() in users:
-      self.reviews[self.author()] = 'APPROVED'
+      self.reviews[self.author()] = True
 
     self.approvals = []
     self.rejections = []
     for user in users:
       if user in self.reviews:
-        review = self.reviews[user]
-        if review == 'APPROVED':
+        if self.reviews[user]:
           self.approvals.append(user)
         else:
           self.rejections.append(user)
@@ -75,7 +77,7 @@ class PullRequest:
         if state == 'COMMENTED':
           continue  # Ignore comments.
   
-        reviews[user] = state
+        reviews[user] = (state == 'APPROVED')
   
       if 'next' in response.links:
         # This unfortunately points to GitHub, and not to the rate-limit-avoiding
