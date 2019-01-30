@@ -24,6 +24,9 @@ You're expected to check in daily to see if there's anything that needs your
 review.  If something looks hard to review, comment saying so instead of just
 silently putting off your review.
 
+When you have a PR ready for review, add the label 'reviewme' on it so people
+know it needs review.  Otherwise it won't show up on the dashboard.
+
 ## Winning
 
 The winner is the first player where a master build (run in response
