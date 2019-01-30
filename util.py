@@ -59,25 +59,39 @@ def get_user_points():
         with open(os.path.join(bonus_directory, named_bonus)) as inf:
           points[user] += int(inf.read())
 
-  cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
+
+  # Iterate through all commits in reverse chronological order, assigning
+  # points to PR authors.
+  #
+  # We only look at master, and we look at the --first-parent history which
+  # just shows the merges: http://www.davidchudzicki.com/posts/first-parent/
+  cmd = ['git', 'log', 'master', '--first-parent', '--format=%H %s']
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
   if completed_process.returncode != 0:
     raise Exception(completed_process)
   process_output = completed_process.stdout.decode('utf-8')
 
-  merge_regexp = '^Merge pull request #([\\d]*) from ([^/]*)/'
-  for commit_subject in process_output.split('\n'):
-    # Iterate through all commits in reverse chronological order.
+  # This can't fully be trusted, since it's under the control of the person who
+  # merges the PR.  You could give yourself a point by merging someone else's
+  # PR and changing the merge text to your own name, but the other players
+  # would probably be mad at you.  There isn't really a way around this without
+  # making new GitHub API calls, so we'll just need to enforce this socially.
+  merge_regexp = '^Merge pull request #[\\d]* from ([^/]*)/'
+  for line in process_output.split('\n'):
+    if not line.strip():
+      continue
+
+    hash, commit_subject = line.split(' ', 1)
+
+    if hash == 'e5cd64d02553a212fdf6e881cb3a152228f2c287':
+      # Only look at PRs merged since restartingthe game.
+      break
 
     match = re.match(merge_regexp, commit_subject)
     if match:
       # Regexp match means this is a merge commit.
 
-      pr_number, commit_username = match.groups()
-
-      if int(pr_number) == 33:
-        # Only look at PRs merged after this one.
-        break
+      commit_username, = match.groups()
 
       if commit_username in points:
         points[commit_username] += 1
