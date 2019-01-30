@@ -97,7 +97,11 @@ def mergeable_as_points_transfer(pr):
   for added_file in diff.added_files:
     s_players, points_user, s_bonuses, bonus_name =  added_file.path.split('/')
     if s_players != 'players' or s_bonuses != 'bonuses':
-      raise Exception('Added file %s is not a bonus file')
+      raise Exception('Added file %s is not a bonus file' % added_file)
+
+    if points_user not in pr.users:
+      raise Exception('Points transfer PRs should not add users: got %s' %
+                      points_user)
 
     (diff_invocation_line, file_mode_line, _, removed_file_line,
      added_file_line, patch_location_line, file_delta_line,
