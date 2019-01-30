@@ -4,6 +4,7 @@ import random
 import re
 import subprocess
 import runpy
+import copy
 
 import util
 import pull_request
@@ -72,7 +73,7 @@ def determine_if_mergeable(pr):
   for rule_priority, rule_full_fname, rule_name, is_allow in sorted(rules):
     print('Running rule %s' % rule_name)
 
-    pr_copy = pr # FIXME
+    pr_copy = copy.deepcopy(pr)
 
     rule_py = runpy.run_path(rule_full_fname)
     fn = rule_py['should_allow' if is_allow else 'should_block']
