@@ -3,50 +3,14 @@ import math
 import random
 import re
 import subprocess
+import runpy
 
 import util
 import pull_request
 
-def get_user_points():
-  points = {}
-
-  for user in util.users():
-    points[user] = 0
-
-    bonus_directory = os.path.join('players', user, 'bonuses')
-    if os.path.isdir(bonus_directory):
-      for named_bonus in os.listdir(bonus_directory):
-        with open(os.path.join(bonus_directory, named_bonus)) as inf:
-          points[user] += int(inf.read())
-
-  cmd = ['git', 'log', 'master', '--first-parent', '--format=%s']
-  completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
-  if completed_process.returncode != 0:
-    raise Exception(completed_process)
-  process_output = completed_process.stdout.decode('utf-8')
-
-  merge_regexp = '^Merge pull request #([\\d]*) from ([^/]*)/'
-  for commit_subject in process_output.split('\n'):
-    # Iterate through all commits in reverse chronological order.
-
-    match = re.match(merge_regexp, commit_subject)
-    if match:
-      # Regexp match means this is a merge commit.
-
-      pr_number, commit_username = match.groups()
-
-      if int(pr_number) == 33:
-        # Only look at PRs merged after this one.
-        break
-
-      if commit_username in points:
-        points[commit_username] += 1
-
-  return points
-
 def print_points():
   print('Points:')
-  for user, user_points in get_user_points().items():
+  for user, user_points in util.get_user_points().items():
     print('  %s: %s' % (user, user_points))
 
 def print_users():
@@ -69,88 +33,6 @@ def print_file_changes(pr):
         print('  %s' % patched_file.path)
   print()
 
-def mergeable_as_points_transfer(pr):
-  # If a PR only moves points around by the creation of new bonus files, has
-  # been approved by every player losing points, reduces the total number of
-  # points, allow it.
-  #
-  # Returns to indicate yes, raises an exception to indicate no.
-  #
-  # Having a PR merged gives you a point (#33), so a PR like:
-  #
-  #  - me:  -2 points
-  #  - you: +1 point
-  #
-  # is effectively:
-  #
-  #  - me:  -1 point
-  #  - you: +1 point
-
-  print('\nConsidering whether this can be merged as a points transfer:')
-
-  diff = pr.diff()
-  if diff.modified_files or diff.removed_files:
-    raise Exception('All file changes must be additions')
-
-  total_points_change = 0
-
-  for added_file in diff.added_files:
-    s_players, points_user, s_bonuses, bonus_name =  added_file.path.split('/')
-    if s_players != 'players' or s_bonuses != 'bonuses':
-      raise Exception('Added file %s is not a bonus file' % added_file)
-
-    if points_user not in pr.users:
-      raise Exception('Points transfer PRs should not add users: got %s' %
-                      points_user)
-
-    (diff_invocation_line, file_mode_line, _, removed_file_line,
-     added_file_line, patch_location_line, file_delta_line,
-     empty_line) = str(added_file).split('\n')
-
-    if diff_invocation_line != 'diff --git a/%s b/%s' % (
-        added_file.path, added_file.path):
-      raise Exception('Unexpected diff invocation: %s' % diff_invocation_line)
-
-    if file_mode_line != 'new file mode 100644':
-      raise Exception('File added with incorrect mode: %s' % file_mode_line)
-
-    if removed_file_line != '--- /dev/null':
-      raise Exception(
-        'Diff format makes no sense: added files should say they are from /dev/null')
-
-    if added_file_line != '+++ b/%s' % added_file.path:
-      raise Exception('Something wrong with file adding line: file is '
-                      '%s but got %s' % (added_file.path, added_file_line))
-
-    if patch_location_line != '@@ -0,0 +1,1 @@':
-      raise Exception('Patch location makes no sense: %s' %
-                      patch_location_line)
-
-    if empty_line:
-      raise Exception('Last line should be empty')
-
-    if file_delta_line.startswith('+'):
-      actual_file_delta = file_delta_line[1:]
-    else:
-      raise Exception('File delta missing initial + for addition: %s' %
-                      file_delta_line)
-
-    # If this isn't an int, then it raises and the PR isn't mergeable
-    points_change = int(actual_file_delta)
-
-    if points_change < 0:
-      if points_user not in pr.approvals:
-        raise Exception('Taking %s points from %s requires their approval.' % (
-            abs(points_change), points_user))
-
-    total_points_change += points_change
-
-  if total_points_change >= 0:
-    raise Exception('points change PRs must on net remove points')
-
-  # Returning without an exception is how we indicate success.
-  print('  yes')
-
 def print_status(pr):
   print('\nAuthor: %s' % pr.author())
 
@@ -171,46 +53,50 @@ def determine_if_mergeable(pr):
   print_points()
   print_status(pr)
 
-  for user, user_points in get_user_points().items():
-    if user_points < 0:
-      raise Exception('Would bring user %s points to %s which is negative.' %
-                      (user, user_points))
+  rules = []
+  for rule_fname in os.listdir('rules'):
+    rule_priority_str, allow_block, rule_name = rule_fname.split('-', 2)
+    rule_name, _ = rule_name.rsplit('.', 1)
+    if allow_block not in ['allow', 'block']:
+      raise Exception('Invalid rule prefix %s in %s' % (
+          allow_block, rule_fname))
+    is_allow = allow_block == 'allow'
 
-  try:
-    mergeable_as_points_transfer(pr)
-  except Exception as e:
-    print("Doesn't meet requirements for points transfer: %s" % e)
-  else:
-    print('Meets requirements for points transfer.  PASS')
-    return
+    rules.append((float(rule_priority_str),
+                  os.path.join('rules', rule_fname),
+                  rule_name,
+                  is_allow))
 
-  if pr.rejections:
-    raise Exception('Rejected by: %s' % (' '.join(pr.rejections)))
 
-  required_approvals = math.ceil(len(util.users()) * 2 / 3)
+  # Go through rules sorted by priority, with ties broken by the filename.
+  for rule_priority, rule_full_fname, rule_name, is_allow in sorted(rules):
+    print('Running rule %s' % rule_name)
 
-  # Allow three days to go by with no commits, but if longer happens then start
-  # lowering the threshold for allowing a commit.
-  approvals_to_skip = util.days_since_last_commit() - 3
-  if approvals_to_skip > 0:
-    print("Skipping up to %s approvals, because it's been %s days"
-          " since the last commit." % (approvals_to_skip,
-                                       util.days_since_last_commit()))
-    required_approvals -= approvals_to_skip
+    pr_copy = pr # FIXME
 
-  if len(pr.approvals) < required_approvals:
-    raise Exception('Insufficient approval: got %s out of %s required approvals' % (len(pr.approvals), required_approvals))
+    rule_py = runpy.run_path(rule_full_fname)
+    fn = rule_py['should_allow' if is_allow else 'should_block']
 
-  # Don't allow PRs to be merged the day they're created unless they pass unanimously
-  if (len(pr.approvals) < len(util.users())) and (pr.days_since_created() < 1):
-    raise Exception('PR created within last 24 hours does not have unanimous approval.')
+    if is_allow:
+      try:
+        # Returns truthy to indicate allowing, anything else including raising
+        # for no judgement.
+        if fn(pr_copy):
+          print('\nPASS: %s' % rule_name)
+          return
+      except Exception as e:
+        print('  %s: %s' % (rule_full_fname, e))
+    else:
+      # Raises an exception to indicate blocking, anything else for no
+      # judgement.
+      fn(pr_copy)
 
   print('\nPASS')
 
 def determine_if_winner():
   print_points()
 
-  for user, user_points in get_user_points().items():
+  for user, user_points in util.get_user_points().items():
     if random.random() < 0.00001 * user_points:
       raise Exception('%s wins!' % user)
   print('The game continues.')

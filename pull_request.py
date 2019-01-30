@@ -7,9 +7,8 @@ class PullRequest:
     self._repo = repo
     self._pr_number = pr_number
     self._target_commit = target_commit
+    self._users = users
     self._pr_json = util.request(self._base_pr_url()).json()
-
-    self.users = users
 
     # Hash from user names to booleans representing whether the user has
     # approved or rejected the PR.
