@@ -28,9 +28,15 @@ to merging a PR) fails saying they're the winner.
 ## Mechanics
 
 Pull requests can only be merged if validate.py, running on master,
-decides they should be.  validate-on-master.sh, .travis.yml, requirements.txt
-and anything else that begins executing before validate.py has gotten a chance
-to begin running on master are out of bounds.
+decides they should be.  Some things are out of bounds:
+
+* validate-on-master.sh, .travis.yml, requirements.txt and anything else that
+  begins executing before validate.py has gotten a chance to begin running on
+  master.
+
+* Editing the text of a merge commit when merging the PR.
+
+* Pushing to branches in jeffkaufman/nomic other than master.
 
 After your pull request has gotten all of its approvals you'll need to restart
 the Travis build before the build will go green.

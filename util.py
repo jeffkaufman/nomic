@@ -72,10 +72,8 @@ def get_user_points():
   process_output = completed_process.stdout.decode('utf-8')
 
   # This can't fully be trusted, since it's under the control of the person who
-  # merges the PR.  You could give yourself a point by merging someone else's
-  # PR and changing the merge text to your own name, but the other players
-  # would probably be mad at you.  There isn't really a way around this without
-  # making new GitHub API calls, so we'll just need to enforce this socially.
+  # merges the PR, except that editing the merge text on GitHub is out of
+  # bounds.
   merge_regexp = '^Merge pull request #[\\d]* from ([^/]*)/'
   for line in process_output.split('\n'):
     if not line.strip():
