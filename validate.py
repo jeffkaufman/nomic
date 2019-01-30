@@ -171,6 +171,11 @@ def determine_if_mergeable(pr):
   print_points()
   print_status(pr)
 
+  for user, user_points in get_user_points().items():
+    if user_points < 0:
+      raise Exception('Would bring user %s points to %s which is negative.' %
+                      (user, user_points))
+
   try:
     mergeable_as_points_transfer(pr)
   except Exception as e:
