@@ -50,10 +50,6 @@ the Travis build before the build will go green.
 
 ## Running locally
 
-validate.py depends on some environment variables that TravisCI sets.  To run
-locally you can do:
+./run.sh: Simulate Travis in determining whether someone has won.
+./run.sh <PR>: Simulate Travis in determing whether a PR can merge.
 
-    TRAVIS_PULL_REQUEST_SHA=$(git log -1 --format='%H') \
-    TRAVIS_PULL_REQUEST=<your PR number> \
-    TRAVIS_REPO_SLUG=jeffkaufman/nomic \
-    python3 validate.py
