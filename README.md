@@ -20,6 +20,10 @@ no turns, just go for it.  Vote on other people's changes by reviewing them.
 Use the dashboard found at https://www.jefftk.com/nomic to track which PRs you
 haven't reviewed.
 
+You're expected to check in daily to see if there's anything that needs your
+review.  If something looks hard to review, comment saying so instead of just
+silently putting off your review.
+
 ## Winning
 
 The winner is the first player where a master build (run in response
