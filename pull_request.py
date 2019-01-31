@@ -100,6 +100,10 @@ class PullRequest:
     # server {
     #   ...
     #   location /nomic-github/repos/jeffkaufman/nomic/pulls {
+    #     if ($request_method != GET) {
+    #       return 403;
+    #     }
+    #
     #     proxy_cache github-proxy;
     #     proxy_ignore_headers Cache-Control Vary;
     #     proxy_cache_valid any 1m;
