@@ -82,7 +82,7 @@ def get_user_points():
     hash, commit_subject = line.split(' ', 1)
 
     if hash == 'e5cd64d02553a212fdf6e881cb3a152228f2c287':
-      # Only look at PRs merged since restartingthe game.
+      # Only look at PRs merged since restarting the game.
       break
 
     match = re.match(merge_regexp, commit_subject)
