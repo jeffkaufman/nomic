@@ -3,7 +3,7 @@ import util
 def should_allow(pr):
   # If a PR only moves points around by the creation of new bonus files, has
   # been approved by every player losing points, reduces the total number of
-  # points, allow it.
+  # points, and does not create any new users, allow it.
   #
   # Returns to indicate yes, raises an exception to indicate no.
   #
