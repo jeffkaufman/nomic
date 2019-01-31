@@ -99,11 +99,11 @@ class PullRequest:
     #
     # server {
     #   ...
-    #   location /nomic-github/repos/jeffkaufman/nomic {
+    #   location /nomic-github/repos/jeffkaufman/nomic/pulls {
     #     proxy_cache github-proxy;
     #     proxy_ignore_headers Cache-Control Vary;
     #     proxy_cache_valid any 1m;
-    #     proxy_pass https://api.github.com/repos/jeffkaufman/nomic;
+    #     proxy_pass https://api.github.com/repos/jeffkaufman/nomic/pulls;
     #     proxy_set_header
     #         Authorization
     #         "Basic [base64 of 'username:token']";
