@@ -1,9 +1,10 @@
+from typing import Dict, List
 import unidiff
 
 import util
 
 class PullRequest:
-  def __init__(self, repo, pr_number, target_commit, users):
+  def __init__(self, repo: str, pr_number: str, target_commit: str, users: List[str]):
     self._repo = repo
     self._pr_number = pr_number
     self._target_commit = target_commit
@@ -17,8 +18,8 @@ class PullRequest:
     if self.author() in users:
       self.reviews[self.author()] = True
 
-    self.approvals = []
-    self.rejections = []
+    self.approvals: List[str] = []
+    self.rejections: List[str] = []
     for user in users:
       if user in self.reviews:
         if self.reviews[user]:
@@ -30,29 +31,29 @@ class PullRequest:
                               if user not in self.approvals
                               and user not in self.rejections ]
 
-  def created_at_ts(self):
+  def created_at_ts(self) -> int:
     return util.iso8601_to_ts(self._pr_json['created_at'])
 
-  def pushed_at_ts(self):
+  def pushed_at_ts(self) -> int:
     return util.iso8601_to_ts(self._pr_json['head']['repo']['pushed_at'])
 
-  def last_changed_ts(self):
+  def last_changed_ts(self) -> int:
     return max(self.created_at_ts(),
                self.pushed_at_ts())
 
-  def days_since_created(self):
+  def days_since_created(self) -> int:
     return util.days_since(self.created_at_ts())
 
-  def days_since_pushed(self):
+  def days_since_pushed(self) -> int:
     return util.days_since(self.pushed_at_ts())
 
-  def days_since_changed(self):
+  def days_since_changed(self) -> int:
     return util.days_since(self.last_changed_ts())
 
-  def _calculate_reviews(self):
+  def _calculate_reviews(self) -> Dict[str, bool]:
     base_url = '%s/reviews' % self._base_pr_url()
     url = base_url
-    reviews = {}
+    reviews: Dict[str, bool] = {}
   
     while True:
       response = util.request(url)
@@ -88,7 +89,7 @@ class PullRequest:
       else:
         return reviews
 
-  def _base_pr_url(self):
+  def _base_pr_url(self) -> str:
     # This is configured in nginx like:
     #
     # proxy_cache_path
@@ -131,12 +132,12 @@ class PullRequest:
     return 'https://www.jefftk.com/nomic-github/repos/%s/pulls/%s' % (
       self._repo, self._pr_number)
 
-  def diff(self):
+  def diff(self) -> unidiff.PatchSet:
     response = util.request('https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff' % (
         self._repo, self._pr_number))
     return unidiff.PatchSet(response.content.decode('utf-8'))
 
-  def author(self):
+  def author(self) -> str:
     return self._pr_json['user']['login']
 
 

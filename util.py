@@ -3,8 +3,9 @@ import re
 import requests
 import subprocess
 import time
+from typing import Dict, List
 
-def request(url):
+def request(url: str) -> requests.Response:
   request_headers = {'User-Agent': 'jeffkaufman/nomic'}
   response = requests.get(url, headers=request_headers)
 
@@ -20,13 +21,13 @@ def request(url):
   response.raise_for_status()
   return response
 
-def iso8601_to_ts(iso8601):
+def iso8601_to_ts(iso8601: str) -> int:
   return int(time.mktime(time.strptime(iso8601, "%Y-%m-%dT%H:%M:%SZ")))
 
-def users():
+def users() -> List[str]:
   return list(sorted(os.listdir('players/')))
 
-def last_commit_ts():
+def last_commit_ts() -> int:
   # When was the last commit on master?
   cmd = ['git', 'log', 'master', '-1', '--format=%ct']
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
@@ -35,19 +36,19 @@ def last_commit_ts():
 
   return int(completed_process.stdout)
 
-def seconds_since(ts):
+def seconds_since(ts) -> int:
   return int(time.time() - ts)
 
-def seconds_to_days(seconds):
+def seconds_to_days(seconds: int) -> int:
   return int(seconds / 60 / 60 / 24)
 
-def days_since(ts):
+def days_since(ts: int) -> int:
   return seconds_to_days(seconds_since(ts))
 
-def days_since_last_commit():
+def days_since_last_commit() -> int:
   return days_since(last_commit_ts())
 
-def get_user_points():
+def get_user_points() -> Dict[str, int]:
   points = {}
 
   for user in users():
