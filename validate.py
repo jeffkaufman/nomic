@@ -68,7 +68,7 @@ def determine_if_mergeable(pr):
 
   # Go through rules sorted by priority, with ties broken by the filename.
   for rule_priority, rule_full_fname, rule_name, is_allow in sorted(rules):
-    print('Running rule %s' % rule_name)
+    print('Running %s rule %s %s' % (('allow' if is_allow else 'block'), rule_priority, rule_name))
 
     pr_copy = copy.deepcopy(pr)
 
