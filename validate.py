@@ -116,7 +116,7 @@ def determine_if_winner():
   rnd = util.random()
   points_so_far = 0
   for user, user_points in util.get_user_points().items():
-    if rnd < 0.00001 * user_points + points_so_far:
+    if rnd < 0.00001 * (user_points + points_so_far):
       raise Exception('%s wins!' % user)
     points_so_far += user_points
 
