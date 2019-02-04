@@ -1,5 +1,4 @@
 import os
-import random
 import runpy
 import copy
 
@@ -114,7 +113,7 @@ def determine_if_winner():
   #   C wins if random is [a_points + b_points, a_points + b_points + c_points)
   #   no one wins if random is [a_points + b_points + c_points, 1)
 
-  rnd = random.random()
+  rnd = util.random()
   points_so_far = 0
   for user, user_points in util.get_user_points().items():
     if rnd < 0.00001 * user_points + points_so_far:
