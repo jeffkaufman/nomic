@@ -96,15 +96,15 @@ def determine_if_winner():
   # Pick a winner at random with a single random number.  We divide the number
   # line up like:
   #
-  # [ a_points | b_points | c_points | ... everything else ... ]
+  #   [ a_points | b_points | c_points | ... everything else ... ]
   #
   # and then we choose a place on the number line randomly:
   #
-  # [ a_points | b_points | c_points | ... everything else ... ]
+  #   [ a_points | b_points | c_points | ... everything else ... ]
   #                          ^
-  #
   # or:
-  # [ a_points | b_points | c_points | ... everything else ... ]
+  #
+  #   [ a_points | b_points | c_points | ... everything else ... ]
   #                                       ^
   # You can think of this as assigning a range to each player:
   #
