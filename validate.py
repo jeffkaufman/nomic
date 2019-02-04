@@ -94,9 +94,33 @@ def determine_if_mergeable(pr):
 def determine_if_winner():
   print_points()
 
+  # Pick a winner at random with a single random number.  We divide the number
+  # line up like:
+  #
+  # [ a_points | b_points | c_points | ... everything else ... ]
+  #
+  # and then we choose a place on the number line randomly:
+  #
+  # [ a_points | b_points | c_points | ... everything else ... ]
+  #                          ^
+  #
+  # or:
+  # [ a_points | b_points | c_points | ... everything else ... ]
+  #                                       ^
+  # You can think of this as assigning a range to each player:
+  #
+  #   A wins if random is [0, a_points)
+  #   B wins if random is [a_points, a_points + b_points)
+  #   C wins if random is [a_points + b_points, a_points + b_points + c_points)
+  #   no one wins if random is [a_points + b_points + c_points, 1)
+
+  rnd = random.random()
+  points_so_far = 0
   for user, user_points in util.get_user_points().items():
-    if random.random() < 0.00001 * user_points:
+    if rnd < 0.00001 * user_points + points_so_far:
       raise Exception('%s wins!' % user)
+    points_so_far += user_points
+
   print('The game continues.')
 
 def start():
