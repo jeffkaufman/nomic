@@ -43,7 +43,8 @@ decides they should be.  Some things are out of bounds:
 
 * Editing the text of a merge commit when merging the PR.
 
-* Pushing to branches in jeffkaufman/nomic other than master.
+* Pushing from the command line to any branches in jeffkaufman/nomic.  To merge
+  to master use the big green button.
 
 After your pull request has gotten all of its approvals you'll need to restart
 the Travis build before the build will go green.
