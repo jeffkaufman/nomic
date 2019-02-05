@@ -27,14 +27,21 @@ def iso8601_to_ts(iso8601: str) -> int:
 def users() -> List[str]:
   return list(sorted(os.listdir('players/')))
 
-def last_commit_ts() -> int:
-  # When was the last commit on master?
-  cmd = ['git', 'log', 'master', '-1', '--format=%ct']
+def latest_master_commit_info(format) -> str:
+  cmd = ['git', 'log', 'master', '-1', '--format=%s' % format]
   completed_process = subprocess.run(cmd, stdout=subprocess.PIPE)
   if completed_process.returncode != 0:
     raise Exception(completed_process)
 
-  return int(completed_process.stdout)
+  return completed_process.stdout.decode('utf-8')
+
+def last_commit_ts() -> int:
+  # When was the last commit on master?
+  return int(latest_master_commit_info(format='%ct'))
+
+def last_commit_sha() -> str:
+  # What is the commit sha of the last commit on master?
+  return latest_master_commit_info(format='%H').strip()
 
 def seconds_since(ts) -> int:
   return int(time.time() - ts)
@@ -96,4 +103,18 @@ def get_user_points() -> Dict[str, int]:
         points[commit_username] += 1
 
   return points
+
+def random() -> float:
+  # Produces a number between 0 and 1 based on the hash of the most recent
+  # commit to master.
+  sha = last_commit_sha()
+  if len(sha) != 40:
+    raise Exception('commit hash wrong length: "%s"' % sha)
+
+  def hash_to_int(s: str) -> int:
+    return int(s, 16)
+
+  biggest_possible_hash = 'f'*len(sha)
+
+  return hash_to_int(sha) / hash_to_int(biggest_possible_hash)
 
