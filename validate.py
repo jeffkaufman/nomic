@@ -10,8 +10,9 @@ def print_points():
   print('Points:')
   for user, user_points in util.get_user_points().items():
     print('  %s: %s' % (user, user_points['total']))
-    for reason in [reason for reason in user_points if reason != 'total']:
-      print('    %s: %s' % (reason, user_points[reason]))
+    for reason in user_points:
+      if reason != 'total':
+        print('    %s: %s' % (reason, user_points[reason]))
 
 def print_users():
   users = util.users()
