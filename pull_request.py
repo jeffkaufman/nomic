@@ -10,6 +10,7 @@ class PullRequest:
     self._target_commit = target_commit
     self._users = users
     self._pr_json = util.request(self._base_pr_url()).json()
+    self._raw_reviews: List[Dict[str, str]] = []
 
     # Hash from user names to booleans representing whether the user has
     # approved or rejected the PR.
@@ -30,6 +31,9 @@ class PullRequest:
     self.non_participants = [ user for user in users
                               if user not in self.approvals
                               and user not in self.rejections ]
+
+  def get_repo(self) -> str:
+    return self._repo
 
   def created_at_ts(self) -> int:
     return util.iso8601_to_ts(self._pr_json['created_at'])
@@ -54,31 +58,35 @@ class PullRequest:
     base_url = '%s/reviews' % self._base_pr_url()
     url = base_url
     reviews: Dict[str, bool] = {}
-  
+
     while True:
       response = util.request(url)
-  
+
       for review in response.json():
         user = review['user']['login']
         commit = review['commit_id']
         state = review['state']
-  
+
+        self._raw_reviews.append({'state': state,
+                                  'user': user,
+                                  'commit': commit})
+
         if state == 'APPROVED' and commit != self._target_commit:
           # An approval clears out any past rejections from a user.
           try:
             del reviews[user]
           except KeyError:
             pass # No past rejections for this user.
-  
+
           # Only accept approvals for the most recent commit, but have rejections
           # last until overridden.
           continue
-  
+
         if state == 'COMMENTED':
           continue  # Ignore comments.
-  
+
         reviews[user] = (state == 'APPROVED')
-  
+
       if 'next' in response.links:
         # This unfortunately points to GitHub, and not to the rate-limit-avoiding
         # proxy.  Pull off the query string (ex: "?page=3") and append that to
@@ -140,5 +148,10 @@ class PullRequest:
   def author(self) -> str:
     return self._pr_json['user']['login']
 
+  def info(self):
+    if not self._pr_json['merged']:
+      raise Exception('info not finalized yet')
 
-
+    return {'author': self.author(),
+            'merged_by': self._pr_json['merged_by']['login'],
+            'reviews': self._raw_reviews}
