@@ -1,6 +1,7 @@
 import os
 import runpy
 import copy
+import traceback
 
 import util
 import pull_request
@@ -67,7 +68,7 @@ def determine_if_mergeable(pr):
 
   # Go through rules sorted by priority, with ties broken by the filename.
   for rule_priority, rule_full_fname, rule_name, is_allow in sorted(rules):
-    print('Running rule %s' % rule_full_fname)
+    print('\nRunning rule %s' % rule_full_fname)
 
     pr_copy = copy.deepcopy(pr)
 
@@ -82,6 +83,7 @@ def determine_if_mergeable(pr):
           print('\nPASS: %s' % rule_name)
           return
       except Exception as e:
+        traceback.print_exc()
         print('  %s: %s' % (rule_full_fname, e))
     else:
       # Raises an exception to indicate blocking, anything else for no
