@@ -59,15 +59,24 @@ class PullRequest:
     return util.days_since(self.last_changed_ts())
 
   def _calculate_diff_at_commit(self, commit: str) -> str:
+    # Determine what changes this commit makes relative to master.
+    #
+    # I don't know a git command directly for it, so instead make a temporary
+    # repo, load all relevant commits into the repo, merge the commit in
+    # question into master, and then diff against origin/master.
+
     print('Calculating diff at %s' % commit)
     original_working_directory = os.getcwd()
     tmp_repo_fname = 'tmp-repo'
     try:
+      # Make a new clone to work in.
       subprocess.check_call([
           'git', 'clone',
           'https://github.com/%s.git' % self._repo, tmp_repo_fname])
       os.chdir(tmp_repo_fname)
       remote_name = self.author()
+
+      # We can't refer to commit until we download it.
       subprocess.check_call(['git', 'remote', 'add', remote_name, self._clone_url])
       subprocess.check_call(['git', 'fetch', remote_name, self._ref])
       subprocess.check_call(['git', 'merge', '--no-edit', commit])
@@ -84,6 +93,9 @@ class PullRequest:
       return ''
 
     finally:
+      # This runs even if we return above, and puts us back in the state we
+      # were in before we tried to calculate the diff.
+
       os.chdir(original_working_directory)
       if os.path.exists(tmp_repo_fname):
         shutil.rmtree(tmp_repo_fname)
