@@ -89,7 +89,7 @@ def get_user_points() -> Dict[str, int]:
 
     hash, commit_subject = line.split(' ', 1)
 
-    if hash == '2923d1a7bad781619b298efa17e7abdf8d16e433':
+    if hash == 'e5229a56a942126dc35c463d0f94f348b3d5389a':
       # Only look at PRs merged since restarting the game.
       break
 
