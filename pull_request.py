@@ -1,5 +1,8 @@
 from typing import Dict, List
+import subprocess
 import unidiff
+import shutil
+import os
 
 import util
 
@@ -10,6 +13,11 @@ class PullRequest:
     self._target_commit = target_commit
     self._users = users
     self._pr_json = util.request(self._base_pr_url()).json()
+    self._clone_url = self._pr_json['head']['repo']['clone_url']
+    self._ref = self._pr_json['head']['ref']
+
+    # commit hash -> diff at commit; lazily built
+    self._commit_diffs: Dict[str, str] = {}
 
     # Hash from user names to booleans representing whether the user has
     # approved or rejected the PR.
@@ -50,35 +58,84 @@ class PullRequest:
   def days_since_changed(self) -> int:
     return util.days_since(self.last_changed_ts())
 
+  def _calculate_diff_at_commit(self, commit: str) -> str:
+    print('Calculating diff at %s' % commit)
+    original_working_directory = os.getcwd()
+    tmp_repo_fname = 'tmp-repo'
+    try:
+      subprocess.check_call([
+          'git', 'clone',
+          'https://github.com/%s.git' % self._repo, tmp_repo_fname])
+      os.chdir(tmp_repo_fname)
+      remote_name = self.author()
+      subprocess.check_call(['git', 'remote', 'add', remote_name, self._clone_url])
+      subprocess.check_call(['git', 'fetch', remote_name, self._ref])
+      subprocess.check_call(['git', 'merge', '--no-edit', commit])
+
+      completed_process = subprocess.run(
+        ['git', 'diff', 'origin/master'], stdout=subprocess.PIPE)
+      if completed_process.returncode != 0:
+        raise Exception(completed_process)
+
+      return completed_process.stdout.decode('utf-8')
+
+    except Exception:
+      print('Failed to get diff at %s' % commit)
+      return ''
+
+    finally:
+      os.chdir(original_working_directory)
+      if os.path.exists(tmp_repo_fname):
+        shutil.rmtree(tmp_repo_fname)
+
+  def _diff_at_commit(self, commit: str) -> str:
+    if commit not in self._commit_diffs:
+      self._commit_diffs[commit] = self._calculate_diff_at_commit(commit)
+
+    return self._commit_diffs[commit]
+
+  def _pr_diff_identical(self, commit_a: str, commit_b: str) -> bool:
+    diff_a = self._diff_at_commit(commit_a)
+    diff_b = self._diff_at_commit(commit_b)
+
+    if not diff_a or not diff_b:
+      return False
+
+    return diff_a == diff_b
+
   def _calculate_reviews(self) -> Dict[str, bool]:
     base_url = '%s/reviews' % self._base_pr_url()
     url = base_url
     reviews: Dict[str, bool] = {}
-  
+
     while True:
       response = util.request(url)
-  
+
       for review in response.json():
         user = review['user']['login']
         commit = review['commit_id']
         state = review['state']
-  
+
         if state == 'APPROVED' and commit != self._target_commit:
           # An approval clears out any past rejections from a user.
           try:
             del reviews[user]
           except KeyError:
             pass # No past rejections for this user.
-  
-          # Only accept approvals for the most recent commit, but have rejections
-          # last until overridden.
-          continue
-  
+
+          # Only accept old approvals if the PR diff to master hasn't changed.
+          if self._pr_diff_identical(commit, self._target_commit):
+            print('Determined approval at old commit %s should still count for %s'
+                  % (commit, self._target_commit))
+          else:
+            print('Old approval at %s not valid at %s' % (commit, self._target_commit))
+            continue
+
         if state == 'COMMENTED':
           continue  # Ignore comments.
-  
+
         reviews[user] = (state == 'APPROVED')
-  
+
       if 'next' in response.links:
         # This unfortunately points to GitHub, and not to the rate-limit-avoiding
         # proxy.  Pull off the query string (ex: "?page=3") and append that to
