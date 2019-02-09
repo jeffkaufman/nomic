@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 import subprocess
 import unidiff
 import shutil
@@ -118,35 +118,22 @@ class PullRequest:
   def _calculate_reviews(self) -> Dict[str, bool]:
     base_url = '%s/reviews' % self._base_pr_url()
     url = base_url
-    reviews: Dict[str, bool] = {}
+
+    # List of reviews in the order they were given.
+    raw_reviews: List[Tuple[str, str, str]] = []
+
+    reviews: Dict[str, bool] = {}  # username -> bool approved
 
     while True:
       response = util.request(url)
 
       for review in response.json():
         user = review['user']['login']
-        commit = review['commit_id']
-        state = review['state']
-
-        if state == 'APPROVED' and commit != self._target_commit:
-          # An approval clears out any past rejections from a user.
-          try:
-            del reviews[user]
-          except KeyError:
-            pass # No past rejections for this user.
-
-          # Only accept old approvals if the PR diff to master hasn't changed.
-          if self._pr_diff_identical(commit, self._target_commit):
-            print('Determined approval at old commit %s should still count for %s'
-                  % (commit, self._target_commit))
-          else:
-            print('Old approval at %s not valid at %s' % (commit, self._target_commit))
-            continue
-
-        if state == 'COMMENTED':
-          continue  # Ignore comments.
-
-        reviews[user] = (state == 'APPROVED')
+        if user not in self._users:
+          continue
+        raw_reviews.append((user,
+                            review['state'],
+                            review['commit_id']))
 
       if 'next' in response.links:
         # This unfortunately points to GitHub, and not to the rate-limit-avoiding
@@ -156,7 +143,34 @@ class PullRequest:
         github_api_path, query_string = next_url.split('?')
         url = '%s?%s' % (base_url, query_string)
       else:
-        return reviews
+        break
+
+    for user, state, commit in reversed(raw_reviews):
+      # Iterate through reviews in reverse chronological order, most recent
+      # first.
+
+      if user in reviews:
+        # Already have a judgement from this user on this PR.
+        continue
+
+      if state == 'COMMENTED':
+        pass  # Ignore comments
+
+      elif state == 'APPROVED':
+        if commit == self._target_commit:
+          reviews[user] = True
+        elif self._pr_diff_identical(commit, self._target_commit):
+          print('Determined approval by %s at old commit %s should still count'
+                ' for %s' % (user, commit, self._target_commit))
+          reviews[user] = True
+        else:
+          print('Old approval by %s at %s not valid at %s' % (
+              user, commit, self._target_commit))
+
+      else:
+        reviews[user] = False
+
+    return reviews
 
   def _base_pr_url(self) -> str:
     # This is configured in nginx like:
