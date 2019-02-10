@@ -1,5 +1,8 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
+import subprocess
 import unidiff
+import shutil
+import os
 
 import util
 
@@ -10,6 +13,11 @@ class PullRequest:
     self._target_commit = target_commit
     self._users = users
     self._pr_json = util.request(self._base_pr_url()).json()
+    self._clone_url = self._pr_json['head']['repo']['clone_url']
+    self._ref = self._pr_json['head']['ref']
+
+    # commit hash -> diff at commit; lazily built
+    self._commit_diffs: Dict[str, str] = {}
 
     # Hash from user names to booleans representing whether the user has
     # approved or rejected the PR.
@@ -50,35 +58,83 @@ class PullRequest:
   def days_since_changed(self) -> int:
     return util.days_since(self.last_changed_ts())
 
+  def _calculate_diff_at_commit(self, commit: str) -> str:
+    # Determine what changes this commit makes relative to master.
+    #
+    # I don't know a git command directly for it, so instead make a temporary
+    # repo, load all relevant commits into the repo, merge the commit in
+    # question into master, and then diff against origin/master.
+
+    print('Calculating diff at %s' % commit)
+    original_working_directory = os.getcwd()
+    tmp_repo_fname = 'tmp-repo'
+    try:
+      # Make a new clone to work in.
+      subprocess.check_call([
+          'git', 'clone',
+          'https://github.com/%s.git' % self._repo, tmp_repo_fname])
+      os.chdir(tmp_repo_fname)
+      remote_name = self.author()
+
+      # We can't refer to commit until we download it.
+      subprocess.check_call(['git', 'remote', 'add', remote_name, self._clone_url])
+      subprocess.check_call(['git', 'fetch', remote_name, self._ref])
+      subprocess.check_call(['git', 'merge', '--no-edit', commit])
+
+      completed_process = subprocess.run(
+        ['git', 'diff', 'origin/master'], stdout=subprocess.PIPE)
+      if completed_process.returncode != 0:
+        raise Exception(completed_process)
+
+      return completed_process.stdout.decode('utf-8')
+
+    except Exception:
+      print('Failed to get diff at %s' % commit)
+      return ''
+
+    finally:
+      # This runs even if we return above, and puts us back in the state we
+      # were in before we tried to calculate the diff.
+
+      os.chdir(original_working_directory)
+      if os.path.exists(tmp_repo_fname):
+        shutil.rmtree(tmp_repo_fname)
+
+  def _diff_at_commit(self, commit: str) -> str:
+    if commit not in self._commit_diffs:
+      self._commit_diffs[commit] = self._calculate_diff_at_commit(commit)
+
+    return self._commit_diffs[commit]
+
+  def _pr_diff_identical(self, commit_a: str, commit_b: str) -> bool:
+    diff_a = self._diff_at_commit(commit_a)
+    diff_b = self._diff_at_commit(commit_b)
+
+    if not diff_a or not diff_b:
+      return False
+
+    return diff_a == diff_b
+
   def _calculate_reviews(self) -> Dict[str, bool]:
     base_url = '%s/reviews' % self._base_pr_url()
     url = base_url
-    reviews: Dict[str, bool] = {}
-  
+
+    # List of reviews in the order they were given.
+    raw_reviews: List[Tuple[str, str, str]] = []
+
+    reviews: Dict[str, bool] = {}  # username -> bool approved
+
     while True:
       response = util.request(url)
-  
+
       for review in response.json():
         user = review['user']['login']
-        commit = review['commit_id']
-        state = review['state']
-  
-        if state == 'APPROVED' and commit != self._target_commit:
-          # An approval clears out any past rejections from a user.
-          try:
-            del reviews[user]
-          except KeyError:
-            pass # No past rejections for this user.
-  
-          # Only accept approvals for the most recent commit, but have rejections
-          # last until overridden.
+        if user not in self._users:
           continue
-  
-        if state == 'COMMENTED':
-          continue  # Ignore comments.
-  
-        reviews[user] = (state == 'APPROVED')
-  
+        raw_reviews.append((user,
+                            review['state'],
+                            review['commit_id']))
+
       if 'next' in response.links:
         # This unfortunately points to GitHub, and not to the rate-limit-avoiding
         # proxy.  Pull off the query string (ex: "?page=3") and append that to
@@ -87,7 +143,34 @@ class PullRequest:
         github_api_path, query_string = next_url.split('?')
         url = '%s?%s' % (base_url, query_string)
       else:
-        return reviews
+        break
+
+    for user, state, commit in reversed(raw_reviews):
+      # Iterate through reviews in reverse chronological order, most recent
+      # first.
+
+      if user in reviews:
+        # Already have a judgement from this user on this PR.
+        continue
+
+      if state == 'COMMENTED':
+        pass  # Ignore comments
+
+      elif state == 'APPROVED':
+        if commit == self._target_commit:
+          reviews[user] = True
+        elif self._pr_diff_identical(commit, self._target_commit):
+          print('Determined approval by %s at old commit %s should still count'
+                ' for %s' % (user, commit, self._target_commit))
+          reviews[user] = True
+        else:
+          print('Old approval by %s at %s not valid at %s' % (
+              user, commit, self._target_commit))
+
+      else:
+        reviews[user] = False
+
+    return reviews
 
   def _base_pr_url(self) -> str:
     # This is configured in nginx like:
