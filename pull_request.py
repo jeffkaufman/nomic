@@ -232,7 +232,6 @@ class PullRequest:
     if diff.modified_files or diff.removed_files:
       raise Exception('All file changes must be additions')
 
-
     bonuses: List[Tuple[str, str, int]] = []
 
     for added_file in diff.added_files:
