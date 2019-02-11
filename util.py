@@ -55,17 +55,25 @@ def days_since(ts: int) -> int:
 def days_since_last_commit() -> int:
   return days_since(last_commit_ts())
 
-def get_user_points() -> Dict[str, int]:
+# Takes a specific user's point values, and computes the total.
+def total_user_points(user_points: Dict[str, int]) -> int:
+  return sum(user_points.values())
+
+# Get points for all users, broken down by point type (bonus, merge, etc.)
+def get_user_points() -> Dict[str, Dict[str, int]]:
   points = {}
 
   for user in users():
-    points[user] = 0
+    points[user] = {
+      'bonus': 0,
+      'merge': 0,
+    }
 
     bonus_directory = os.path.join('players', user, 'bonuses')
     if os.path.isdir(bonus_directory):
       for named_bonus in os.listdir(bonus_directory):
         with open(os.path.join(bonus_directory, named_bonus)) as inf:
-          points[user] += int(inf.read())
+          points[user]['bonus'] += int(inf.read())
 
 
   # Iterate through all commits in reverse chronological order, assigning
@@ -100,7 +108,7 @@ def get_user_points() -> Dict[str, int]:
       commit_username, = match.groups()
 
       if commit_username in points:
-        points[commit_username] += 1
+        points[commit_username]['merge'] += 1
 
   return points
 
