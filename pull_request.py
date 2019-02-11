@@ -221,7 +221,7 @@ class PullRequest:
     return unidiff.PatchSet(response.content.decode('utf-8'))
 
   def get_new_bonuses_or_raise(self) -> List[Tuple[str, str, int]]:
-    # If this PR represents adding a new bonus files, return details
+    # If this PR represents adding only new bonus files, return details
     # about the files.  Otherwise raise an exception explaining how the diff
     # doesn't qualify.
     #
@@ -273,7 +273,7 @@ class PullRequest:
 
       try:
         points_change = int(actual_file_delta)
-      except ValueError:
+      except Exception:
         raise Exception("File should contain a single integer.")
 
       bonuses.append((points_user, bonus_name, points_change))
