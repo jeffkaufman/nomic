@@ -9,10 +9,9 @@ import pull_request
 def print_points():
   print('Points:')
   for user, user_points in util.get_user_points().items():
-    print('  %s: %s' % (user, user_points['total']))
+    print('  %s: %s' % (user, util.total_user_points(user_points)))
     for reason in user_points:
-      if reason != 'total':
-        print('    %s: %s' % (reason, user_points[reason]))
+      print('    %s: %s' % (reason, user_points[reason]))
 
 def print_users():
   users = util.users()
@@ -121,9 +120,9 @@ def determine_if_winner():
   rnd = util.random()
   points_so_far = 0
   for user, user_points in util.get_user_points().items():
-    if rnd < 0.00001 * (user_points['total'] + points_so_far):
+    if rnd < 0.00001 * (util.total_user_points(user_points) + points_so_far):
       raise Exception('%s wins!' % user)
-    points_so_far += user_points['total']
+    points_so_far += util.total_user_points(user_points)
 
   print('The game continues.')
 
