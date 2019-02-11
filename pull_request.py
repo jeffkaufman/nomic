@@ -271,8 +271,10 @@ class PullRequest:
         raise Exception('File delta missing initial + for addition: %s' %
                         file_delta_line)
 
-      # If this isn't an int, then it raises and the PR isn't mergeable
-      points_change = int(actual_file_delta)
+      try:
+        points_change = int(actual_file_delta)
+      except ValueError:
+        raise Exception("File should contain a single integer.")
 
       bonuses.append((points_user, bonus_name, points_change))
 
