@@ -116,11 +116,18 @@ def determine_if_winner():
   #   B wins if random is [a_points, a_points + b_points)
   #   C wins if random is [a_points + b_points, a_points + b_points + c_points)
   #   no one wins if random is [a_points + b_points + c_points, 1)
+  #
+  # The number line defaults to a range of 100000.
+  # In order to ensure fairness with large numbers of points,
+  # we extend the line if total points across all players exceed that value.
+  # Relative chance per-player is still preserved.
 
   rnd = util.random()
+  total_points = util.total_points()
+  scalar = min(0.00001, 1.0 / total_points)
   points_so_far = 0
   for user, user_points in util.get_user_points().items():
-    if rnd < 0.00001 * (util.total_user_points(user_points) + points_so_far):
+    if rnd < scalar * (util.total_user_points(user_points) + points_so_far):
       raise Exception('%s wins!' % user)
     points_so_far += util.total_user_points(user_points)
 
