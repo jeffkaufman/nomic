@@ -8,7 +8,7 @@ def should_allow(pr):
   
   if len(bonuses) > 1:
     raise Exception('Only one new player can be added in a PR')
-  elif len(bonuses) < 0:
+  elif len(bonuses) < 1:
     raise Exception('Empty diff?')
   
   (points_user, points_name, points_change) = bonuses[0]
