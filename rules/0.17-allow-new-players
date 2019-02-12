@@ -17,7 +17,7 @@ def should_allow(pr):
     raise Exception('Cannot create an existing user')
   
   if points_name != 'initial':
-    raise Exception('New player bonus value must be called \'initial\'')
+    raise Exception('New player bonus value must be called "initial"')
 
   if points_change < 0:
     raise Exception('Points cannot be negative')
