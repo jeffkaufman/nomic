@@ -121,7 +121,7 @@ def determine_if_winner():
   points_so_far = 0
   for user, user_points in util.get_user_points().items():
     if rnd < 0.00001 * (util.total_user_points(user_points) + points_so_far):
-      raise Exception('%s wins!' % user)
+      raise Exception('%s wins! They had a %s chance to win.' % (user, user_points / 100000))
     points_so_far += util.total_user_points(user_points)
 
   print('The game continues.')
