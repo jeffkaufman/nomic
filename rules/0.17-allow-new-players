@@ -11,7 +11,7 @@ def should_allow(pr):
   elif len(bonuses) < 0:
     raise Exception('Empty diff?')
   
-  points_user, points_name, points_change = bonuses[0]
+  (points_user, points_name, points_change) = bonuses[0]
   
   if points_user in util.users():
     raise Exception('Cannot create an existing user')
