@@ -55,10 +55,6 @@ def days_since(ts: int) -> int:
 def days_since_last_commit() -> int:
   return days_since(last_commit_ts())
 
-# Sums all points across all users
-def total_points() -> int:
-  sum([total_user_points(user_points) for user_points in get_user_points()])
-
 # Takes a specific user's point values, and computes the total.
 def total_user_points(user_points: Dict[str, int]) -> int:
   return sum(user_points.values())
