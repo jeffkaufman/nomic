@@ -139,7 +139,7 @@ def determine_if_winner():
   
   print('Probability of winning:')
   for user, user_points in summed_user_points:
-  print('%s: %.3f%%' % (user, user_points * scalar * 100))
+    print('%s: %.3f%%' % (user, user_points * scalar * 100))
     
   for user, user_points in summed_user_points:
     if rnd < scalar * (user_points + points_so_far):
