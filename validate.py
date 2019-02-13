@@ -116,13 +116,35 @@ def determine_if_winner():
   #   B wins if random is [a_points, a_points + b_points)
   #   C wins if random is [a_points + b_points, a_points + b_points + c_points)
   #   no one wins if random is [a_points + b_points + c_points, 1)
+  #
+  # The number line defaults to a range of 100000.
+  # In order to ensure fairness with large numbers of points,
+  # we extend the line if total points across all players exceed that value.
+  # Relative chance per-player is still preserved.
 
   rnd = util.random()
+  all_user_points = util.get_user_points()
+
+  summed_user_points = [(user, util.total_user_points(user_points))
+                        for user, user_points in all_user_points.items()]
+
+  # Don't include negative values when summing user points,
+  # since they have no chance to win anyway
+  # There shouldn't be negative values, but just in case...
+  total_points = sum([user_points for user, user_points
+                      in summed_user_points if user_points > 0])
+
+  scalar = min(0.00001, 1.0 / total_points)
   points_so_far = 0
-  for user, user_points in util.get_user_points().items():
-    if rnd < 0.00001 * (util.total_user_points(user_points) + points_so_far):
-      raise Exception('%s wins! They had a %s chance to win.' % (user, user_points / 100000))
-    points_so_far += util.total_user_points(user_points)
+  
+  print('Probability of winning:')
+  for user, user_points in summed_user_points:
+  print('%s: %.3f%%' % (user, user_points * scalar * 100))
+    
+  for user, user_points in summed_user_points:
+    if rnd < scalar * (user_points + points_so_far):
+      raise Exception('%s wins!' % user)
+    points_so_far += user_points
 
   print('The game continues.')
 
