@@ -7,11 +7,12 @@ username like:
 
     players/$yourname/bonuses/initial
 
-The file should contain the number 10.  Then ping Jeff (jeffkaufman) so you can
-be added to the repo collaborators.
-
-If Jeff doesn't add you to the list of repo collaborators, ping him to ask him
-to.  This will allow you to press the merge button yourself.
+This file should contain your initial number of points.  If you choose to
+start with 0 points, your pull request won't require approval from existing
+players.  You can also choose to start with more points, but you'll need to
+wait for other players to approve your PR.  Either way, ping Jeff
+(jeffkaufman) so you can be added to the repo collaborators.  This will allow
+you to press the merge button yourself.
 
 ## Playing
 
@@ -51,8 +52,9 @@ the Travis build before the build will go green.
 
 ## Running locally
 
-./run.sh: Simulate Travis in determining whether someone has won.
-./run.sh <PR>: Simulate Travis in determing whether a PR can merge.
+`./run.sh` Simulate Travis in determining whether someone has won.
+
+`./run.sh <PR>` Simulate Travis in determing whether a PR can merge.
 
 PRs can't be merged unless they pass type checks, and type checks don't run on
 Travis until all checks on Master pass, which they won't until your PR is
