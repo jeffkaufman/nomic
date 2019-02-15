@@ -15,5 +15,5 @@ def should_block(pr):
         required_approvals -= approvals_to_skip
 
     if len(pr.approvals) < required_approvals:
-        raise Exception(
-            'Insufficient approval: got %s out of %s required approvals' % (len(pr.approvals), required_approvals))
+        raise Exception('Insufficient approval: got %s out of %s required approvals'
+                        % (len(pr.approvals), required_approvals))
