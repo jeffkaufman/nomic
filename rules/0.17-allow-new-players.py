@@ -14,10 +14,9 @@ def should_allow(pr):
   
   (points_user, points_name, points_change) = bonuses[0]
   
-  pr_user = pr['user']['login']
-  if pr_user != points_user:
+  if pr.author != points_user:
     raise Exception('New players should submit their own PRs, but %s submitted the PR to add %s' %
-                    (pr_user, points_user))
+                    (pr.author, points_user))
   
   if points_name != 'initial':
     raise Exception('New player bonus value is called %s instead of "initial"' % points_name)
