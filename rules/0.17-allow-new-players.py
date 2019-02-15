@@ -16,7 +16,7 @@ def should_allow(pr):
   if points_user in util.users():
     raise Exception('Cannot create an existing user')
     
-  response = util.request(_user_url(points_user))
+  response = util.request('https://www.jefftk.com/nomic-github/users/%s' % points_user)
   if (response.status_code != 200)
     raise Exception('%s is not a real GitHub user' % points_user)
   
@@ -31,6 +31,3 @@ def should_allow(pr):
                     (points_change, max_start_bonus))
 
   return True
-
-def _user_url(user: str) -> str:
-  return 'https://www.jefftk.com/nomic-github/users/%s' % user
