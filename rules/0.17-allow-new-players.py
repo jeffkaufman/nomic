@@ -1,3 +1,4 @@
+import os
 import util
 
 # This value set to 0 until we figure out a good way to prevent dummy account abuse
