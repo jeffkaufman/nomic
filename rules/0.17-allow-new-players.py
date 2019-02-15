@@ -14,6 +14,11 @@ def should_allow(pr):
   
   (points_user, points_name, points_change) = bonuses[0]
   
+  pr_user = pr['user']['login']
+  if pr_user != points_user:
+    raise Exception('New players should submit their own PRs, but %s submitted the PR to add %s' %
+                    (pr_user, points_user))
+  
   if points_name != 'initial':
     raise Exception('New player bonus value is called %s instead of "initial"' % points_name)
     
@@ -29,9 +34,5 @@ def should_allow(pr):
     for bonus in os.listdir(bonus_directory):
       if bonus != 'initial':
         raise Exception('%s already has bonuses' % points_user)
-    
-  response = util.request('https://www.jefftk.com/nomic-github/users/%s' % points_user)
-  if response.status_code != 200:
-    raise Exception('%s is not a real GitHub user' % points_user)
 
   return True
