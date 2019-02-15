@@ -51,8 +51,9 @@ the Travis build before the build will go green.
 
 ## Running locally
 
-./run.sh: Simulate Travis in determining whether someone has won.
-./run.sh <PR>: Simulate Travis in determing whether a PR can merge.
+`./run.sh` Simulate Travis in determining whether someone has won.
+
+`./run.sh <PR>` Simulate Travis in determing whether a PR can merge.
 
 PRs can't be merged unless they pass type checks, and type checks don't run on
 Travis until all checks on Master pass, which they won't until your PR is
