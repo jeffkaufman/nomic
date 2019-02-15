@@ -1,4 +1,4 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import subprocess
 import unidiff
 import shutil
@@ -172,7 +172,7 @@ class PullRequest:
 
     return reviews
 
-  def _base_pr_url(self) -> str:
+  def _base_pr_url(self, pr_number: Optional[str] = None) -> str:
     # This is configured in nginx like:
     #
     # proxy_cache_path
@@ -212,8 +212,23 @@ class PullRequest:
     # we have a lot of old open PRs we don't care about we could either close
     # them or make the dashboard only gather reviews for PRs in the "reviewme"
     # state.
+    if pr_number is None:
+      pr_number = self._pr_number
+
     return 'https://www.jefftk.com/nomic-github/repos/%s/pulls/%s' % (
-      self._repo, self._pr_number)
+      self._repo, pr_number)
+
+  def derive_pr(self, pr_number: str, target_commit: Optional[str] = None):
+    # Load a different PR based on this one.  If the intended commit is not
+    # specified, the PR is loaded at HEAD.
+    if target_commit is None:
+      pr_json = util.request(self._base_pr_url(pr_number)).json()
+      target_commit = pr_json['head']['sha']
+
+    return PullRequest(repo=self._repo,
+                       pr_number=str(pr_number),
+                       target_commit=target_commit,
+                       users=self._users)
 
   def diff(self) -> unidiff.PatchSet:
     response = util.request('https://patch-diff.githubusercontent.com/raw/%s/pull/%s.diff' % (
