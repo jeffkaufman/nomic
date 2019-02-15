@@ -30,7 +30,7 @@ def should_allow(pr):
         raise Exception('%s already has bonuses' % points_user)
     
   response = util.request('https://www.jefftk.com/nomic-github/users/%s' % points_user)
-  if (response.status_code != 200)
+  if response.status_code != 200:
     raise Exception('%s is not a real GitHub user' % points_user)
 
   return True
