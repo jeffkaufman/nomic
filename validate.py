@@ -136,6 +136,11 @@ def determine_if_winner():
 
   scalar = min(0.00001, 1.0 / total_points)
   points_so_far = 0
+  
+  print('Probability of winning:')
+  for user, user_points in summed_user_points:
+    print('%s: %.3f%%' % (user, user_points * scalar * 100))
+    
   for user, user_points in summed_user_points:
     if rnd < scalar * (user_points + points_so_far):
       raise Exception('%s wins!' % user)

@@ -47,6 +47,8 @@ decides they should be.  Some things are out of bounds:
 * Pushing from the command line to any branches in jeffkaufman/nomic.  To merge
   to master use the big green button.
 
+* Using multiple accounts on GitHub (sockpuppets).
+
 After your pull request has gotten all of its approvals you'll need to restart
 the Travis build before the build will go green.
 
