@@ -2,6 +2,10 @@ import os
 import runpy
 
 SIMPLE_TESTS = {
+    '0.17-allow-new-players.py': [
+        ('236', 'New players should submit their own PRs, but jeffkaufman submitted the PR to add sockpupper1'),
+        ('225', '10 initial points exceeds maximum starting value of 0 points'),
+    ],
     '0.3-allow-points-transfer.py': [
         ('33', 'All file changes must be additions'),
         ('82', 'Points transfer PRs should not add users: got dchudz'),
