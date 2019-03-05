@@ -12,6 +12,8 @@ SIMPLE_TESTS = {
         # TODO: Have a non-player submit a starting value of -1
         # ('?', 'Points cannot be negative'),
         ('225', '10 initial points exceeds maximum starting value of 0 points'),
+        # TODO: Have a non-player submit a starting value of 0
+        # ('?', None),
     ],
     '0.3-allow-points-transfer.py': [
         ('33', 'All file changes must be additions'),
