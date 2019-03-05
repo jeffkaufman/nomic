@@ -20,7 +20,7 @@ def should_allow(pr):
                         (pr.author(), points_user))
 
     if points_name != 'initial':
-        raise Exception('New player bonus value is called %s instead of "initial"' % points_name)
+        raise Exception('New player bonus value is called "%s" instead of "initial"' % points_name)
 
     if points_change < 0:
         raise Exception('Points cannot be negative')
