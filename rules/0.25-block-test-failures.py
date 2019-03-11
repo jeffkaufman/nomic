@@ -4,7 +4,9 @@ import runpy
 SIMPLE_TESTS = {
     '0.17-allow-new-players.py': [
         ('247', 'All file changes must be additions'),
-        ('250', 'Added file rules/0.22-block-nothing.py is not a bonus file'),
+        ('250', 'not enough values to unpack (expected 4, got 2)'),
+        ('260', 'Added file rules/tnelling/bonuses/initial is not a bonus file'),
+        ('261', 'Added file players/tnelling/foo/initial is not a bonus file'),
         ('253', 'File should contain a single integer.'),
         ('254', 'Only one new player can be added in a PR'),
         ('236', 'New players should submit their own PRs, but jeffkaufman submitted the PR to add sockpupper1'),
