@@ -9,10 +9,9 @@ SIMPLE_TESTS = {
         ('254', 'Only one new player can be added in a PR'),
         ('236', 'New players should submit their own PRs, but jeffkaufman submitted the PR to add sockpupper1'),
         ('220', 'New player bonus value is called "lose-point" instead of "initial"'),
-        # TODO: Have a non-player submit a starting value of -1
-        # ('?', 'Points cannot be negative'),
+        ('255', 'Points cannot be negative'),
         ('225', '10 initial points exceeds maximum starting value of 0 points'),
-        ('255', None),
+        ('258', None),
     ],
     '0.3-allow-points-transfer.py': [
         ('33', 'All file changes must be additions'),
