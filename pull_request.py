@@ -98,7 +98,14 @@ class PullRequest:
 
             os.chdir(original_working_directory)
             if os.path.exists(tmp_repo_fname):
-                shutil.rmtree(tmp_repo_fname)
+
+                # rmtree can fail on Windows if files are set to readonly
+                def remove_readonly(func, path, _):
+                    # Clear the readonly bit and reattempt the removal
+                    os.chmod(path, stat.S_IWRITE)
+                    func(path)
+
+                shutil.rmtree(tmp_repo_fname, onerror=remove_readonly)
 
     def _diff_at_commit(self, commit: str) -> str:
         if commit not in self._commit_diffs:
