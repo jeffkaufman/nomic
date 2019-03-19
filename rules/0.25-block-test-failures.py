@@ -5,6 +5,7 @@ SIMPLE_TESTS = {
     '0.3-allow-points-transfer.py': [
         ('33', 'All file changes must be additions'),
         ('82', 'Points transfer PRs should not add users: got dchudz'),
+        ('265', 'Taking 1 points from dnathe4th requires their approval.'),
         ('220', None),
     ],
 }
