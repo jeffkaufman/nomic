@@ -6,6 +6,7 @@ SIMPLE_TESTS = {
         ('33', 'All file changes must be additions'),
         ('82', 'Points transfer PRs should not add users: got dchudz'),
         ('265', 'Taking 1 points from dnathe4th requires their approval.'),
+        ('268', 'points change PRs must on net remove points'),
         ('267', None),
     ],
 }
